@@ -1,0 +1,295 @@
+
+==================== FINAL INTERFACE ====================
+2017-09-15 11:11:17.22947 UTC
+
+interface main@main:Main [hpc] 8002
+  interface hash: 9d4b3e2a2261fe675e568b5800e43cb2
+  ABI hash: b326b70453d7e27fa797e2aea9262603
+  export-list hash: 482cd25fc988c8b465bb590bb31d5ca9
+  orphan hash: 0df913cd66fbae4fd43de083906f4914
+  flag hash: 93c7f38286625a660f3cbfe5e216bd17
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  Main.dataBase
+  Main.insert
+  Main.main
+  Main.sort''
+  Main.DataBase{Main.DataBase key value}
+  Main.Pair{Main.Pair}
+module dependencies:
+package dependencies: base-4.9.1.0* ghc-prim-0.5.0.0
+                      integer-gmp-1.0.0.1 t2-0.1.0.0@t2-0.1.0.0-14Gg9zCko73IYxZB4AF3aY
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Either base-4.9.1.0:Data.Functor.Const
+                         base-4.9.1.0:Data.Monoid base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:GHC.Generics base-4.9.1.0:GHC.IO.Exception
+                         base-4.9.1.0:GHC.TypeLits
+import  -/  base-4.9.1.0:GHC.Base c4231c43c07e46080a26bf94094c7aa1
+import  -/  base-4.9.1.0:GHC.Show a027f5ac24879eaba752f44aa90fe511
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+import  -/  base-4.9.1.0:System.IO e4a64a8e3dce8616da54f0ee7104f7db
+import  -/  ghc-prim-0.5.0.0:GHC.Classes 0bdf3d057a415ec1b84a7b1994efbe47
+import  -/  ghc-prim-0.5.0.0:GHC.Types 89f8de4f08018c9177c98d979eae0e45
+import  -/  t2-0.1.0.0@t2-0.1.0.0-14Gg9zCko73IYxZB4AF3aY:Lib 4d1d37ec6b3d9ccd2affe874a013f413
+91a2cf4d0bdb9897b32bcc97573f4974
+  $s$fShow[]_$cshow :: [GHC.Integer.Type.Integer] -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (x :: [GHC.Integer.Type.Integer]) ->
+                 GHC.Show.$fShowInteger_$cshowList
+                   x
+                   (GHC.Types.[] @ GHC.Types.Char)) -}
+e0e63c1598ece41df50d608335c86cd3
+  $tc'DataBase :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   18180785100970341467##
+                   1903841175393289639##
+                   Main.$trModule
+                   Main.$tc'DataBase1) -}
+4c96e7fe1b228594de46d771786205a7
+  $tc'DataBase1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'DataBase"#) -}
+11c32fde49fbe1e6ceea6e9c64326c57
+  $tc'Pair :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   10224448114034803930##
+                   7506890485268976573##
+                   Main.$trModule
+                   Main.$tc'Pair1) -}
+5668b12f6bf0be23795a6244320a2c88
+  $tc'Pair1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "'Pair"#) -}
+c6ba14bdb0d6663384daa3f4bc83e85a
+  $tcDataBase :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   6511668779928231854##
+                   8880108258927451694##
+                   Main.$trModule
+                   Main.$tcDataBase1) -}
+083959cc2c914f6ba2da416c45b4be17
+  $tcDataBase1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "DataBase"#) -}
+dd183de1ca55c9aa5640ddf6be917b2e
+  $tcPair :: GHC.Types.TyCon
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.TyCon
+                   3471459928268552927##
+                   330866797192322085##
+                   Main.$trModule
+                   Main.$tcPair1) -}
+69253bd6660ebfd516748bb3646638d4
+  $tcPair1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "Pair"#) -}
+d6831ef04cb9301b090dfae6f7bb7ec7
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module Main.$trModule2 Main.$trModule1) -}
+847d9fc3b8e6f0b424199f36b4999bb2
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "Main"#) -}
+24ef6042833e75ffd7aa98b83ecca98d
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "main"#) -}
+33cb82cef6a9814ff925bccb38900479
+  $w$sinsert ::
+    GHC.Integer.Type.Integer
+    -> [GHC.Integer.Type.Integer]
+    -> (# GHC.Integer.Type.Integer, [GHC.Integer.Type.Integer] #)
+  {- Arity: 2, HasNoCafRefs, Strictness: <L,U><S,1*U>, Inline: [0] -}
+624830acde0b04843966ca71153fa0ec
+  $winsert :: GHC.Classes.Ord a => a -> [a] -> (# a, [a] #)
+  {- Arity: 3, HasNoCafRefs,
+     Strictness: <L,U(A,A,A,A,C(C1(U)),A,A,A)><L,U><S,1*U>,
+     Inline: [0] -}
+3298bcee1369c6d93d9979b678e9f812
+  data DataBase
+    = DataBase {key :: GHC.Base.String, value :: GHC.Base.String}
+a31580b9cf4f7b14f7e636cc8e537bd5
+  data Pair = Pair GHC.Base.String GHC.Base.String
+b7b91b77c6a4642d9703730fc6de6453
+  dataBase :: [Main.DataBase]
+  {- Unfolding: ({__scc {main@main:Main.dataBase} True False} GHC.Types.:
+                                                                @ Main.DataBase
+                                                                Main.dataBase5
+                                                                Main.dataBase1) -}
+643ec7d3b2cd9ca9b9bf8ddcb810ab0e
+  dataBase1 :: [Main.DataBase]
+  {- Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ Main.DataBase
+                   Main.dataBase2
+                   (GHC.Types.[] @ Main.DataBase)) -}
+b9a5d4c43ac299802d611ab2dabce6ba
+  dataBase2 :: Main.DataBase
+  {- Strictness: m,
+     Unfolding: (Main.DataBase Main.dataBase4 Main.dataBase3) -}
+93f438bcc05bc398df3371eeb484e56f
+  dataBase3 :: [GHC.Types.Char]
+  {- Unfolding: ({__scc {main@main:Main.dataBase} False True} {__scc {main@main:Main.dataBase} False True} GHC.CString.unpackCString#
+                                                                                                             "milch"#) -}
+7c3bd10f2f7271c5006ffd2e16ce3ddd
+  dataBase4 :: [GHC.Types.Char]
+  {- Unfolding: ({__scc {main@main:Main.dataBase} False True} {__scc {main@main:Main.dataBase} False True} GHC.CString.unpackCStringUtf8#
+                                                                                                             "\\208\\188\\208\\190\\208\\187\\208\\190\\208\\186\\208\\190"#) -}
+b7b13152660bbb2731ba550ba09eac18
+  dataBase5 :: Main.DataBase
+  {- Strictness: m,
+     Unfolding: (Main.DataBase Main.dataBase7 Main.dataBase6) -}
+0a245c9bcf8ab57bcaff3283ecbfb872
+  dataBase6 :: [GHC.Types.Char]
+  {- Unfolding: ({__scc {main@main:Main.dataBase} False True} {__scc {main@main:Main.dataBase} False True} GHC.CString.unpackCString#
+                                                                                                             "wasser"#) -}
+1358292a7e1b8d77296bf20145724c8a
+  dataBase7 :: [GHC.Types.Char]
+  {- Unfolding: ({__scc {main@main:Main.dataBase} False True} {__scc {main@main:Main.dataBase} False True} GHC.CString.unpackCStringUtf8#
+                                                                                                             "\\208\\178\\208\\190\\208\\180\\208\\176"#) -}
+8c3602e8be0c2c8424434e13964a5e9e
+  insert :: GHC.Classes.Ord a => a -> [a] -> [a]
+  {- Arity: 3, HasNoCafRefs,
+     Strictness: <L,U(A,A,A,A,C(C1(U)),A,A,A)><L,U><S,1*U>m2,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (3, True, False)
+                (\ @ a (w :: GHC.Classes.Ord a) (w1 :: a) (w2 :: [a]) ->
+                 case Main.$winsert @ a w w1 w2 of ww { (#,#) ww1 ww2 ->
+                 GHC.Types.: @ a ww1 ww2 }) -}
+4c64f0482752e4208911cf25ecaf5a79
+  insert_$sinsert ::
+    GHC.Integer.Type.Integer
+    -> [GHC.Integer.Type.Integer] -> [GHC.Integer.Type.Integer]
+  {- Arity: 2, HasNoCafRefs, Strictness: <L,U><S,1*U>m2,
+     Inline: INLINE[0],
+     Unfolding: InlineRule (2, True, False)
+                (\ (w :: GHC.Integer.Type.Integer)
+                   (w1 :: [GHC.Integer.Type.Integer]) ->
+                 case Main.$w$sinsert w w1 of ww { (#,#) ww1 ww2 ->
+                 GHC.Types.: @ GHC.Integer.Type.Integer ww1 ww2 }) -}
+b28db0bec56c74e66bac1b832e560509
+  key :: Main.DataBase -> GHC.Base.String
+  RecSel Left Main.DataBase
+  {- Arity: 1, HasNoCafRefs, Strictness: <S(SL),1*U(1*U,A)>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: Main.DataBase) ->
+                 {__scc {main@main:Main.key} True True} case ds of wild { Main.DataBase ds1 ds2 ->
+                                                        ds1 }) -}
+223b2acdf726faee6798c68ca52bc4db
+  main :: GHC.Types.IO ()
+  {- Unfolding: InlineRule (0, True, True)
+                Main.main1 `cast` (Sym (GHC.Types.N:IO[0] <()>_R)) -}
+797d881f7094966f48fee12b93e34baf
+  main1 ::
+    GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
+  {- Unfolding: ({__scc {main@main:Main.main} True True} ({__scc {main@main:Main.main} False True} System.IO.putStrLn1)
+                                                           Main.main2) -}
+427f0fecf79d330620bd11bec8eabe5a
+  main10 :: GHC.Integer.Type.Integer
+  {- HasNoCafRefs, Unfolding: (4) -}
+f1e3024ff4311d815620eb0fd9d55dea
+  main11 :: GHC.Integer.Type.Integer
+  {- HasNoCafRefs, Unfolding: (5) -}
+a920273fe10a2be3afadf63aa91fc60d
+  main12 :: GHC.Integer.Type.Integer
+  {- HasNoCafRefs, Unfolding: (3) -}
+eead574a36adb96da46b439a72abdc05
+  main13 :: GHC.Integer.Type.Integer
+  {- HasNoCafRefs, Unfolding: (1) -}
+a5f5509b59e7ffa9e5eadb130910b05d
+  main14 ::
+    GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
+  {- Arity: 1,
+     Unfolding: (GHC.TopHandler.runMainIO1
+                   @ ()
+                   Main.main1 `cast` (Sym (GHC.Types.N:IO[0] <()>_R))) -}
+4cd58f14f3313bab1c14efb28e7a3b39
+  main2 :: GHC.Base.String
+  {- Unfolding: ({__scc {main@main:Main.main} False True} ({__scc {main@main:Main.main} False True} Main.$s$fShow[]_$cshow)
+                                                            Main.main3) -}
+2e887e4b0dc298528fc0cdd71d920acc
+  main3 :: [GHC.Integer.Type.Integer]
+  {- Unfolding: ({__scc {main@main:Main.main} False True} Main.main_$ssort''
+                                                            Main.main4) -}
+561940f921166c1c4ee4ce375d7d2461
+  main4 :: [GHC.Integer.Type.Integer]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ GHC.Integer.Type.Integer
+                   Main.main13
+                   Main.main5) -}
+46d3b43350bd45132bcba012dcd475e4
+  main5 :: [GHC.Integer.Type.Integer]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ GHC.Integer.Type.Integer
+                   Main.main12
+                   Main.main6) -}
+126b4447574cdfe568087d391fd50808
+  main6 :: [GHC.Integer.Type.Integer]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ GHC.Integer.Type.Integer
+                   Main.main11
+                   Main.main7) -}
+b8c7ace02f759f75f66cfccf75569881
+  main7 :: [GHC.Integer.Type.Integer]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ GHC.Integer.Type.Integer
+                   Main.main10
+                   Main.main8) -}
+0fa1754233ec169f638a1752b573dd41
+  main8 :: [GHC.Integer.Type.Integer]
+  {- HasNoCafRefs, Strictness: m2,
+     Unfolding: (GHC.Types.:
+                   @ GHC.Integer.Type.Integer
+                   Main.main9
+                   (GHC.Types.[] @ GHC.Integer.Type.Integer)) -}
+7e9725a9f846ef05a0ffbe9edc0e165f
+  main9 :: GHC.Integer.Type.Integer
+  {- HasNoCafRefs, Unfolding: (2) -}
+95d41e69fb603e4a26a560d52d44592d
+  main_$ssort'' ::
+    [GHC.Integer.Type.Integer] -> [GHC.Integer.Type.Integer]
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U> -}
+e8109b3b1b20309c286e5c712792fdd5
+  sort'' :: GHC.Classes.Ord a => [a] -> [a]
+  {- Arity: 2, HasNoCafRefs,
+     Strictness: <L,U(A,A,A,A,C(C1(U)),A,A,A)><S,1*U> -}
+4dd75e80bd1d714ceb068725bf50fea1
+  value :: Main.DataBase -> GHC.Base.String
+  RecSel Left Main.DataBase
+  {- Arity: 1, HasNoCafRefs, Strictness: <S(LS),1*U(A,1*U)>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: Main.DataBase) ->
+                 {__scc {main@main:Main.value} True True} case ds of wild { Main.DataBase ds1 ds2 ->
+                                                          ds2 }) -}
+"SPEC insert @ Integer" [ALWAYS] forall ($dOrd :: GHC.Classes.Ord
+                                                    GHC.Integer.Type.Integer)
+  Main.insert @ GHC.Integer.Type.Integer $dOrd = Main.insert_$sinsert
+"SPEC sort'' @ Integer" [ALWAYS] forall ($dOrd :: GHC.Classes.Ord
+                                                    GHC.Integer.Type.Integer)
+  Main.sort'' @ GHC.Integer.Type.Integer $dOrd = Main.main_$ssort''
+"SPEC/Main $fShow[]_$cshow @ Integer" [ALWAYS] forall ($dShow :: GHC.Show.Show
+                                                                   GHC.Integer.Type.Integer)
+  GHC.Show.$fShow[]_$cshow @ GHC.Integer.Type.Integer $dShow
+  = Main.$s$fShow[]_$cshow
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: safe
+require own pkg trusted: False
+

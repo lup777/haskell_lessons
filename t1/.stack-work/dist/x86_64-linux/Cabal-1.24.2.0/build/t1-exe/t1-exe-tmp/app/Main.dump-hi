@@ -1,0 +1,86 @@
+
+==================== FINAL INTERFACE ====================
+2017-09-11 11:42:17.799072 UTC
+
+interface main@main:Logic 8002
+  interface hash: 5d678e5c2ac91ccbd980dd1f08815e20
+  ABI hash: 539a2449ae303aa4681265f57beea7fd
+  export-list hash: e9bf313eafdc900c01ab408c5a2f9058
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 077ab44bab187b646ed8db874e27db69
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  Logic.and
+  Logic.false
+  Logic.ifThenElse
+  Logic.not
+  Logic.or
+  Logic.true
+module dependencies:
+package dependencies: base-4.9.1.0* ghc-prim-0.5.0.0
+                      integer-gmp-1.0.0.1
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Either base-4.9.1.0:Data.Functor.Const
+                         base-4.9.1.0:Data.Monoid base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:GHC.Generics base-4.9.1.0:GHC.IO.Exception
+                         base-4.9.1.0:GHC.TypeLits
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+ca6564237fa0081dd05fb2c7d5fe07ca
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module Logic.$trModule2 Logic.$trModule1) -}
+35bdf61d5231cfb6344058c93d09cda1
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "Logic"#) -}
+06e77711d77f96dcf7572f74409c4ee9
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "main"#) -}
+e977e754db5589ac77ca87d495c36fc9
+  and :: GHC.Types.Bool -> GHC.Types.Bool -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,1*U><L,1*U>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (ds :: GHC.Types.Bool) (x :: GHC.Types.Bool) ->
+                 case ds of wild {
+                   GHC.Types.False -> GHC.Types.False GHC.Types.True -> x }) -}
+1aaf29b4aee322b220dd7055ddce0995
+  false :: GHC.Types.Bool
+  {- HasNoCafRefs,
+     Unfolding: InlineRule (0, True, True) GHC.Types.False -}
+8e03f7b9b1dfd5a631d9ab5893281bac
+  ifThenElse :: GHC.Types.Bool -> a -> a -> a
+  {- Arity: 3, HasNoCafRefs, Strictness: <S,1*U><L,1*U><L,1*U>,
+     Unfolding: InlineRule (3, True, False)
+                (\ @ a (ds :: GHC.Types.Bool) (t :: a) (ds1 :: a) ->
+                 case ds of wild { GHC.Types.False -> ds1 GHC.Types.True -> t }) -}
+d74467f848e2edfa6754f3bcd37eac40
+  not :: GHC.Types.Bool -> GHC.Types.Bool
+  {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: GHC.Types.Bool) ->
+                 case ds of wild {
+                   GHC.Types.False -> GHC.Types.True
+                   GHC.Types.True -> GHC.Types.False }) -}
+66579059c4e771d2172d522873c8dbdb
+  or :: GHC.Types.Bool -> GHC.Types.Bool -> GHC.Types.Bool
+  {- Arity: 2, HasNoCafRefs, Strictness: <S,1*U><L,1*U>,
+     Unfolding: InlineRule (2, True, False)
+                (\ (ds :: GHC.Types.Bool) (x :: GHC.Types.Bool) ->
+                 case ds of wild {
+                   GHC.Types.False -> x GHC.Types.True -> GHC.Types.True }) -}
+df36c65a62914b6628f3ce3cc4fef80f
+  true :: GHC.Types.Bool
+  {- HasNoCafRefs,
+     Unfolding: InlineRule (0, True, True) GHC.Types.True -}
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: safe
+require own pkg trusted: False
+

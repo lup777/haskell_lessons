@@ -1,0 +1,62 @@
+
+==================== FINAL INTERFACE ====================
+2017-09-15 07:40:25.756043 UTC
+
+interface t2-0.1.0.0-14Gg9zCko73IYxZB4AF3aY:Lib [hpc] 8002
+  interface hash: 9da7bcc11f8557424290fd5ff566f670
+  ABI hash: 4d1d37ec6b3d9ccd2affe874a013f413
+  export-list hash: f7a8fcacc2fd8b9afb5fc22431ead6cc
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 566c261facb1547c57528108f6948d9c
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  Lib.someFunc
+module dependencies:
+package dependencies: base-4.9.1.0* ghc-prim-0.5.0.0
+                      integer-gmp-1.0.0.1
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Either base-4.9.1.0:Data.Functor.Const
+                         base-4.9.1.0:Data.Monoid base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:GHC.Generics base-4.9.1.0:GHC.IO.Exception
+                         base-4.9.1.0:GHC.TypeLits
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+import  -/  base-4.9.1.0:System.IO e4a64a8e3dce8616da54f0ee7104f7db
+import  -/  ghc-prim-0.5.0.0:GHC.Types 89f8de4f08018c9177c98d979eae0e45
+a8e8357e1734f850d8b34ad274a6e598
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module Lib.$trModule2 Lib.$trModule1) -}
+576e79a24e8bc0b06140ee46c829cd3e
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "Lib"#) -}
+c9fc02f5c7eec1310b0180a7cde5cf32
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS
+                   "t2-0.1.0.0-14Gg9zCko73IYxZB4AF3aY"#) -}
+09c305a8c83d1d986f7cc28842b13d78
+  someFunc :: GHC.Types.IO ()
+  {- Unfolding: InlineRule (0, True, True)
+                Lib.someFunc1 `cast` (Sym (GHC.Types.N:IO[0] <()>_R)) -}
+d57997de901ab3d916d7789353cce0bf
+  someFunc1 ::
+    GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
+  {- Unfolding: ({__scc {t2-0.1.0.0-14Gg9zCko73IYxZB4AF3aY:Lib.someFunc} True True} System.IO.putStrLn1
+                                                                                      Lib.someFunc2) -}
+7c03cd303ab6d982d1682d745181848f
+  someFunc2 :: [GHC.Types.Char]
+  {- Unfolding: ({__scc {t2-0.1.0.0-14Gg9zCko73IYxZB4AF3aY:Lib.someFunc} False True} GHC.CString.unpackCString#
+                                                                                       "someFunc"#) -}
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: safe
+require own pkg trusted: False
+

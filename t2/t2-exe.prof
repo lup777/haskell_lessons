@@ -1,0 +1,37 @@
+	Fri Sep 15 14:06 2017 Time and Allocation Profiling Report  (Final)
+
+	   t2-exe +RTS -N -p -RTS
+
+	total time  =        0.00 secs   (0 ticks @ 1000 us, 1 processor)
+	total alloc =      73,784 bytes  (excludes profiling overheads)
+
+COST CENTRE MODULE           SRC                  %time %alloc
+
+MAIN        MAIN             <built-in>             0.0   30.9
+CAF         GHC.IO.Handle.FD <entire-module>        0.0   46.8
+CAF         GHC.IO.Encoding  <entire-module>        0.0    3.9
+CAF         GHC.Event.Thread <entire-module>        0.0    1.7
+main        Main             app/Main.hs:37:1-43    0.0   14.8
+
+
+                                                                                individual      inherited
+COST CENTRE MODULE                SRC                        no.     entries  %time %alloc   %time %alloc
+
+MAIN        MAIN                  <built-in>                  48          0    0.0   30.9     0.0  100.0
+ CAF        GHC.Event.Thread      <entire-module>             88          0    0.0    1.7     0.0    1.7
+ CAF        GHC.IO.Encoding       <entire-module>             87          0    0.0    3.9     0.0    3.9
+ CAF        GHC.IO.Handle.FD      <entire-module>             86          0    0.0   46.8     0.0   46.8
+ CAF        GHC.Conc.Signal       <entire-module>             84          0    0.0    0.9     0.0    0.9
+ CAF        GHC.IO.Handle.Text    <entire-module>             80          0    0.0    0.1     0.0    0.1
+ CAF        GHC.Event.Poll        <entire-module>             77          0    0.0    0.1     0.0    0.1
+ CAF        GHC.IO.Encoding.Iconv <entire-module>             73          0    0.0    0.3     0.0    0.3
+ CAF        GHC.Event.EPoll       <entire-module>             67          0    0.0    0.1     0.0    0.1
+ CAF:main1  Main                  <no location info>          94          0    0.0    0.0     0.0    0.1
+  main      Main                  app/Main.hs:37:1-43         96          1    0.0    0.1     0.0    0.1
+ CAF:main2  Main                  <no location info>          93          0    0.0    0.0     0.0    1.0
+  main      Main                  app/Main.hs:37:1-43         98          0    0.0    1.0     0.0    1.0
+ CAF:main3  Main                  <no location info>          92          0    0.0    0.0     0.0    0.5
+  main      Main                  app/Main.hs:37:1-43         99          0    0.0    0.0     0.0    0.5
+   sort''   Main                  app/Main.hs:(18,1)-(19,36) 100          6    0.0    0.3     0.0    0.5
+    insert  Main                  app/Main.hs:(22,1)-(25,26) 101          9    0.0    0.2     0.0    0.2
+ main       Main                  app/Main.hs:37:1-43         97          0    0.0   13.7     0.0   13.7
