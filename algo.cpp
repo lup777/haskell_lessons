@@ -1,6 +1,7 @@
 // algo.cpp
 
 #include <iostream>
+#include <fstream>
 #include <ctime>
 #include <string>
 #include <cstdlib>
@@ -11,17 +12,16 @@ class ItemList;
 class Item;
 
 void fillWithRandomInts(int* arr, int len, int min, int max );
-void sort_by_insertions(int* arr, int len);
-void show_array(int* arr, int len);
 ItemList isort(ItemList il);
 ItemList insert(Item i, ItemList il);
+ItemList read_input();
 
 #define Int int
 
 class Item
 {
 public:
-  Item(int i)
+  Item(long long int i)
     {
       m_i = i;
     }
@@ -37,7 +37,6 @@ public:
       
       return *this;
     }
-
   
   friend ostream& operator<<(ostream& os, const Item& i)
     {
@@ -85,7 +84,7 @@ public:
       m_i = object.m_i;
     }
   
-  int m_i;
+  long long int m_i;
 };
 
 class ItemList
@@ -134,6 +133,15 @@ public:
       return new_il; //copy
     }
 
+  friend ItemList cons(ItemList il, Item i)
+    {
+      ItemList new_il(il);
+      new_il.m_il.push_back(i);
+      //cout << "new ItemList size = " << new_il.size() << endl;
+      return new_il; //copy
+    }
+
+
   friend ItemList cons(ItemList il1, ItemList il2)
     {
       ItemList new_il(il1);
@@ -159,7 +167,7 @@ public:
       return new_il;
     }
  
-  int size()
+  long long int size()
     {
       return m_il.size();
     }
@@ -184,54 +192,37 @@ public:
       return cons(i, il);
     }
 
-/*  ItemList& operator += (ItemList& other)
-    {
-      cout << "not friend copy operator" << endl;
-      return *this;
-      }*/
-
   list<Item> m_il;
 };
 
-int main (){
-  /*{
-    int len = 100;
-    int arr[len];
-    fillWithRandomInts(arr, len, 0, 100);
-    sort_by_insertions(arr, len);
-    show_array(arr, len);
-  }*/
-
-
-  ItemList il;
-  il = cons(Item(3), ItemList());
-  il = cons(Item(8), il);
-  il = cons(Item(7), il);
-  il = cons(Item(1), il);
-  il = cons(Item(2), il);
-  il = cons(Item(5), il);
-
-/*  il += Item(3);
-  cout << "il size: " << il.size() << endl;
-  il += Item(8);
-  cout << "il size: " << il.size() << endl;
-  il += Item(7);
-  cout << "il size: " << il.size() << endl;
-  il += Item(1);
-  cout << "il size: " << il.size() << endl;
-  il += Item(2);
-  cout << "il size: " << il.size() << endl;
-  il += Item(5);
-  cout << "il size: " << il.size() << endl;*/
-
+int main ()
+{
+  ItemList il = read_input();
   
-  cout << il << endl;
-  cout << "il head = " << head(il) << endl;
-  cout << "il head(tail) = " << head(tail(il)) << endl;
-
+  cout << "        " << il << endl;
   cout << "sorted: " << isort(il) << endl;
   
   return 0;
+}
+
+ItemList read_input()
+{
+  ifstream ifs;
+  ifs.open("input.txt", ifstream::in);
+
+  int num_of_numbers;
+  ItemList il;
+
+  ifs >> num_of_numbers;
+  cout << "num_of_numbers: " << num_of_numbers << endl;
+
+  while(!ifs.eof() && il.size() < num_of_numbers)
+  {
+    long long int tmp;
+    ifs >> tmp;
+    il = cons(il, Item(tmp));
+  }
+  return il;
 }
 
 ItemList isort(ItemList il)
@@ -250,49 +241,6 @@ ItemList insert(Item i, ItemList il)
     return cons(head(il), insert(i, tail(il)));
   else
     return cons(i, il);
-}
-
-
-/*list<int> sort_list_by_insertions(list<int> xs)
-{
-  auto insert = [insert](int x, list<int> xs)
-  {
-    if(xs.size() > 0)
-    {
-      list<int> tail = xs;
-      tail.pop_front();
-      retun insert(xs.front(), tail)
-    }
-    
-  };
-*/
-
-
-void sort_by_insertions(int *arr, int len) {
-  // сортировка  вставками
-  int i, j;
-  for(i = len - 2; i > 0 ; --i)
-    for(j = i; j < len; ++j)
-      if( arr[j-1] > arr[j])
-        swap(arr[j-1], arr[j]);
-}
-
-
-
-
-
-
-
-void show_array(int* arr, int len) {
-  string str_out;
-  for(int i = 0; i < len; ++i) {
-    str_out += to_string(arr[i]);
-    
-    if(i != len) {
-      str_out += string(", ");
-    }
-  }
-  cout << "array: " << str_out << endl;
 }
 
 void fillWithRandomInts(int* arr, int len, int min, int max ) {
