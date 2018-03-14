@@ -7,6 +7,7 @@
 #include <QSharedPointer>
 #include <QRect>
 #include <QSpinBox>
+#include <QPoint>
 
 namespace Ui {
 class MainWindow;
@@ -37,6 +38,7 @@ private:
     CTree tree_;
     QSharedPointer<CNode> selected_node_;
     QRect node_rect_;
+    QPoint mouse_click_point_;
 
     float CorrectX(int x);
 };

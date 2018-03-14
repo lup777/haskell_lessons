@@ -11,6 +11,8 @@ CNode::CNode(int key, int value, int x, int y, QSharedPointer<CNode> parent)
     , y_(y)
     , color_(Qt::green)
     , parent_(parent)
+    , dx_(0)
+    , dy_(0)
 {
     qDebug()  << "new Node(" << key << ", " << value << ")";
     if(b_terminator_ == true)
@@ -62,14 +64,14 @@ int CNode::Value(void) {
 }
 
 QSharedPointer<CNode> CNode::MakeLeft(int key, int value, QSharedPointer<CNode> parent ) {
-    left_ = QSharedPointer<CNode>(new CNode(key, value, x_ - 50, y_ + 50, parent));
+    left_ = QSharedPointer<CNode>(new CNode(key, value, key, y_ + 50, parent));
     left_->SetVLevel(v_level_ - 1);
     MoveAllFromLevel(v_level_, GetRoot());
     return left_;
 }
 
 QSharedPointer<CNode> CNode::MakeRight(int key, int value, QSharedPointer<CNode> parent){
-    right_ = QSharedPointer<CNode>(new CNode(key, value, x_ + 50, y_ + 50, parent));
+    right_ = QSharedPointer<CNode>(new CNode(key, value, key, y_ + 50, parent));
     right_->SetVLevel(v_level_ + 1);
     MoveAllFromLevel(v_level_, GetRoot());
     return right_;
@@ -151,4 +153,20 @@ void CNode::MoveAllFromLevel(int level, QSharedPointer<CNode> node) {
             MoveAllFromLevel(level, node->Right());
         }
     }
+}
+
+int CNode::Dx() {
+    return dx_;
+}
+
+void CNode::SetDx(int dx) {
+    dx_ = dx;
+}
+
+int CNode::Dy() {
+    return dy_;
+}
+
+void CNode::SetDy(int dy) {
+    dy_ = dy;
 }

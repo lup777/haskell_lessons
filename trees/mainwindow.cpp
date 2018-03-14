@@ -77,12 +77,12 @@ void MainWindow::DrawNode(QSharedPointer<CNode> node) {
     // Устанавливаем кисть абриса
     painter.setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap));
 
-    int x = CorrectX(node->Key());
+    int x = CorrectX(node->X()) + node->Dx();
+    int y = node->Y() + node->Dy();
 
     painter.setBrush(QBrush(node->Color(), Qt::SolidPattern));
-    painter.drawEllipse(x, node->Y(), node_rect_.width(), node_rect_.height());
-    node->SetX(x);
-    painter.drawText(QRect(x+ 2, node->Y()+5, x + 17, node->Y()),
+    painter.drawEllipse(x, y, node_rect_.width(), node_rect_.height());
+    painter.drawText(QRect(x+ 2, y+5, x + 17, y),
                      QString::number(node->Key()));
 }
 
@@ -95,11 +95,13 @@ void MainWindow::on_pushButton_clicked() //add
 }
 
 void MainWindow::mouseMoveEvent (QMouseEvent * event) {
-    /*if(!selected_node_->IsTerminator()) {
+   if(!selected_node_->IsTerminator()) {
+        //selected_node_->SetDx(event->x() - mouse_click_point_.x());
         selected_node_->SetX(event->x());
-        selected_node_->SetY(event->y());
+        selected_node_->SetDy(event->y() - mouse_click_point_.y());
+        //qDebug() << "Dx = " << selected_node_->Dx();
         this->repaint();
-    }*/
+    }
 }
 
 void MainWindow::mouseReleaseEvent( QMouseEvent * event) {
@@ -110,11 +112,13 @@ void MainWindow::mousePressEvent( QMouseEvent * event){
     int x = event->x();
     int y = event->y();
 
+
     QSharedPointer<CNode> selected;
     std::function<bool(QSharedPointer<CNode>&)> cmp = [&x, &y, this](QSharedPointer<CNode>& node){
-        int node_x = node->X();
-        if((x > node_x) && (x <= node_x + 50)) {
-            if((y > node->Y()) && (y <= node->Y() + 50)) {
+        int node_x = CorrectX(node->X()) + node->Dx();
+        int node_y = node->Y() + node->Dy();
+        if((x > node_x) && (x <= node_x + node_rect_.width())) {
+            if((y > node_y) && (y <= node_y + node_rect_.height())) {
                 return true;
             }
         }
@@ -130,6 +134,7 @@ void MainWindow::mousePressEvent( QMouseEvent * event){
         }
     }
     this->repaint();
+    mouse_click_point_ = QPoint(x, y);
 }
 
 float MainWindow::CorrectX(int x) {

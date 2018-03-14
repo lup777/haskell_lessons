@@ -44,3 +44,52 @@ insert' :: (Ord a) => a -> [a] -> [a]
 insert' x []     = [x]
 insert' x (y : xs) | x > y = y : insert' x xs
                    | True  = x : y : xs
+
+data Transport = TCP | UDP | SCTP
+
+checkProtocol :: Transport -> String
+checkProtocol transport = case transport of
+  TCP -> "That's TCP protocol."
+  UDP -> "That's UDP protocol."
+  SCTP -> "That's SCTP protocol."
+
+main :: IO ()
+main = putStrLn . checkProtocol $ TCP
+-- let protocol = TCP
+
+data Day = Sunday
+         | Monday
+         | Tuesday
+         | Wednesday
+         | Thursday
+         | Friday
+         | Saturday
+         
+data WorkMode = FiveDays | SixDays
+
+workingDays :: WorkMode -> [Day]
+workingDays FiveDays = [ Monday
+                       , Tuesday
+                       , Wednesday
+                       , Thursday
+                       , Friday
+                       ]
+workingDays SixDays = [ Monday
+                      , Tuesday
+                      , Wednesday
+                      , Thursday
+                      , Friday
+                      , Saturday
+                      ]
+
+data IP = String
+
+show_ip :: IO ()
+show_ip = 
+  let ip = "127.0.0.1"
+  in
+    putStrLn ip
+
+apply2 :: (t -> t) -> t -> t
+apply2 f x = f (f x)
+-- apply2 4 -> 8

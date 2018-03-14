@@ -29,6 +29,10 @@ public:
     QSharedPointer<CNode> GetRoot();
     void MoveAllFromLevel(int level, QSharedPointer<CNode> node);
     CNode();
+    int Dx();
+    void SetDx(int dx);
+    int Dy();
+    void SetDy(int dy);
 
 private:
 
@@ -36,8 +40,8 @@ private:
     int key_;
     int value_;
     bool b_terminator_;
-    int x_;
-    int y_;
+    int x_, dx_;
+    int y_, dy_;
     QColor color_;
     QSharedPointer<CNode> parent_;
     int v_level_; // vertical level
