@@ -23,6 +23,7 @@ public:
 
     void DrawNode(QSharedPointer<CNode> node);
     void DrawAllNode(QSharedPointer<CNode> node);
+    QImage drawImage(QRect rect);
 
 protected:
     void paintEvent(QPaintEvent *event);

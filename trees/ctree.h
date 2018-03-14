@@ -15,6 +15,7 @@ public:
     int MaxKey();
     QVector<int> GetNodesOnLevel(int level);
     bool Find(std::function<bool(QSharedPointer<CNode>&)>& f, QSharedPointer<CNode>& result);
+    void ApplyForAll(std::function<void(QSharedPointer<CNode> node)> f);
 
 private:
     QSharedPointer<CNode> root_;

@@ -17,15 +17,6 @@ CTree::CTree(int key, int value, int x, int y)
     , min_key_(key)
     , max_key_(key)
 {
-    /*QSharedPointer<CNode> left, right;
-    left = root_->MakeLeft(50, 500, root_);
-    right = root_->MakeRight(150, 1500, root_);
-
-    left->MakeLeft(25, 250, left);
-    left = left->MakeRight(75, 750, left);
-    left->MakeRight(87, 870, left);
-
-    right->MakeLeft(125, 1500, right);*/
     Add(0, 10, root_);
     Add(-3, -30, root_);
     Add(50, 500, root_);
@@ -111,4 +102,18 @@ bool CTree::Find(std::function<bool(QSharedPointer<CNode> &)> &f, QSharedPointer
     };
     search(root_);
     return bresult;
+}
+
+void CTree::ApplyForAll(std::function<void(QSharedPointer<CNode> node)> f)
+{
+    std::function<void(QSharedPointer<CNode> node)> applyRecursively =
+            [this, &f, &applyRecursively](QSharedPointer<CNode> node) {
+      if (!node->IsTerminator()) {
+        f(node);
+        applyRecursively(node->Left());
+        applyRecursively(node->Right());
+      }
+    };
+
+    applyRecursively(root_);
 }
