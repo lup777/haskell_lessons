@@ -142,9 +142,9 @@ void MainWindow::on_pushButton_clicked() //add
 void MainWindow::mouseMoveEvent (QMouseEvent * event) {
    if(!selected_node_->IsTerminator()) {
         //selected_node_->SetDx(event->x() - mouse_click_point_.x());
-         //selected_node_->SetX(event->x());
+         selected_node_->SetX(event->x() - selected_node_->Dx());
         //selected_node_->SetDy(event->y() - mouse_click_point_.y());
-         //selected_node_->SetY(event->y());
+         selected_node_->SetY(event->y() - selected_node_->Dy());
         //qDebug() << "Dx = " << selected_node_->Dx();
         this->repaint();
     }
