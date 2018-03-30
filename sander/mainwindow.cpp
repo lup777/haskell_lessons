@@ -4,6 +4,9 @@
 #include <QPainter>
 #include <QColor>
 #include <QPaintEvent>
+#include <QDebug>
+
+#include "node.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -48,8 +51,20 @@ void MainWindow::setImage()
     buffer_painter.fillRect(this->rect(), Qt::white );
 
     //start drawing
-    buffer_painter.drawLine(this->rect().x(), this->rect().y(), this->rect().width(), this->rect().height());
+
+    tree_.Apply([&buffer_painter](PNode node) {
+      buffer_painter.drawEllipse(node->Position(), node->Radius().x(), node->Radius().y());
+      qDebug() << "tree_.Apply(f)";
+    });
     //end draw
+
+    tree_.Apply([](PNode node) {
+      if (node->IsTerminator()) {
+        qDebug() << node->Value() << "is terminator";
+      } else {
+        qDebug() << node->Value() << "is not terminator";
+      }
+    });
 
     image_buffer_ = buffer;
     mutex_.unlock();

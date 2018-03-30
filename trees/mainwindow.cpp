@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     , selected_node_(QSharedPointer<CNode>(new CNode()))
 {
     ui->setupUi(this);
-
+    offset_ = QPoint(0, 0);
 }
 
 MainWindow::~MainWindow()
@@ -30,6 +30,11 @@ void MainWindow::paintEvent(QPaintEvent *event)
     Q_UNUSED(event);
     QRect rect = this->rect();
     QImage buffer = drawImage(rect);
+
+    QRect newRect = QRect(buffer.rect().x() + offset_.x(),
+                          buffer.rect().y() + offset_.y(),
+                          buffer.width(), buffer.height());
+    buffer = buffer.copy(newRect);
     QPainter p(this);
     p.drawImage(buffer.rect(), buffer, this->rect());
 }
@@ -122,7 +127,7 @@ void MainWindow::DrawNode(QSharedPointer<CNode> node) {
     // Устанавливаем кисть абриса
     painter.setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap));
 
-    int x = CorrectX(node->X()) + node->Dx();
+    int x = CorrectX(node->X()) + node-offset_>Dx();
     int y = node->Y() + node->Dy();
 
     painter.setBrush(QBrush(node->Color(), Qt::SolidPattern));
@@ -140,14 +145,16 @@ void MainWindow::on_pushButton_clicked() //add
 }
 
 void MainWindow::mouseMoveEvent (QMouseEvent * event) {
-   if(!selected_node_->IsTerminator()) {
-        //selected_node_->SetDx(event->x() - mouse_click_point_.x());
-         selected_node_->SetX(event->x() - selected_node_->Dx());
-        //selected_node_->SetDy(event->y() - mouse_click_point_.y());
-         selected_node_->SetY(event->y() - selected_node_->Dy());
-        //qDebug() << "Dx = " << selected_node_->Dx();
-        this->repaint();
-    }
+   if (!selected_node_->IsTerminator()) {
+     //selected_node_->SetDx(event->x() - mouse_click_point_.x());
+     selected_node_->SetX(event->x() - selected_node_->Dx());
+     //selected_node_->SetDy(event->y() - mouse_click_point_.y());
+     selected_node_->SetY(event->y() - selected_node_->Dy());
+     //qDebug() << "Dx = " << selected_node_->Dx();
+     this->repaint();
+    } else {
+       offset_ = mouse_click_point_ - event->pos();
+   }
 }
 
 void MainWindow::mouseReleaseEvent( QMouseEvent * event) {

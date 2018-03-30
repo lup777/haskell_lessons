@@ -3,6 +3,11 @@
 
 #include <QMainWindow>
 #include <QMutex>
+#include <QList>
+#include <QSharedPointer>
+
+#include "node.h"
+#include "tree.h"
 
 namespace Ui {
 class MainWindow;
@@ -22,6 +27,7 @@ private:
     Ui::MainWindow *ui;
     QMutex mutex_;
     QImage image_buffer_;
+    Tree tree_;
 };
 
 #endif // MAINWINDOW_H

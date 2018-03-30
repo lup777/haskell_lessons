@@ -40,6 +40,7 @@ private:
     QSharedPointer<CNode> selected_node_;
     QRect node_rect_;
     QPoint mouse_click_point_;
+    QPoint offset_;
 
     float CorrectX(int x);
 };
