@@ -7,6 +7,9 @@ import System.IO
 import System.Process
 import System.Posix.Files
 import Control.Monad
+import System.FilePath.Posix
+import System.Directory
+import qualified Codec.Binary.UTF8.String as UTF8
 
 test = putStrLn "hi"
 
@@ -459,9 +462,9 @@ tt arr = let f = \xs -> case xs of
          in f arr
 
 
-io_head :: IO [String] -> IO String
-io_head io_arr = do arr <- io_arr
-                    return (head arr)
+headM :: IO [String] -> IO String
+headM io_arr = do arr <- io_arr
+                  return (head arr)
 
                       
 -- listFolder    :: FilePath -> IO [String]
@@ -471,17 +474,75 @@ io_head io_arr = do arr <- io_arr
 
 isDir :: String -> IO Bool
 isDir str = do status <- getFileStatus str
-               return . not . isDirectory $ status
+               print str
+               return $ isDirectory $ status
+
+isNotDir :: String -> IO Bool
+isNotDir str = do status <- getFileStatus str
+                  return $ not $ isDirectory $ status
 
 
 grepFolders :: IO [String] -> IO [String]
 grepFolders io_arr = do arr <- io_arr
-                        filterM isDir arr
+                        --filterM isDir arr
+                        filterM doesDirectoryExist arr
+
+grepFolders' :: FilePath -> IO [FilePath]
+grepFolders' path = do arr <- getDirectoryContents path
+                        --filterM isDir arr
+                       filterM doesDirectoryExist arr
+
+grepFolders'' :: FilePath -> IO ()
+grepFolders'' path = do arr <- getDirectoryContents path
+                        let pif = \e_ -> do e <- doesDirectoryExist e_
+                                            case e of
+                                              True  -> print e_
+                                              False -> return ()
+                        mapM_ pif arr
+
+notM :: IO Bool -> IO Bool
+notM io_b = do b <- io_b
+               return $ not b
 
 grepFiles :: IO [String] -> IO [String]
 grepFiles io_arr = do arr <- io_arr
-                      filterM isDir arr
+                      filterM (\d -> notM $ doesDirectoryExist d) arr
 
+--applyM :: (a -> IO b) -> IO [a] -> IO [b]
+--applyM f io_list = 
+
+showPathList :: IO [String] -> IO ()
+showPathList io_list = do let show_ = \e -> putStrLn e
+                          list <- io_list
+                          io_apply show_ list
+                          return ()
 
 t' :: IO [String]
-t' = grepFiles (listFolder "./")
+t' = grepFolders (listFolder "/home/alexander/")
+
+t'' :: IO [String]
+t'' = grepFiles (listFolder "/home/alexander/")
+--t' :: IO ()
+--t' = showPathList $ grepFolders $ listFolder $ makeValid "/home/alexander/"
+
+t''' :: FilePath -> IO ()
+t''' path = getDirectoryContents path >>=
+            filterM doesFileExist >>=
+            mapM_ print
+
+getQualifiedDirectoryContents :: FilePath -> IO [FilePath]
+getQualifiedDirectoryContents fp =
+    map (fp </>) . filter (`notElem` [".",".."]) <$> getDirectoryContents fp
+
+--                           (<$>) :: Functor f => (a -> b) -> f a -> f b
+-- ( <$> getDirectoryContents "/") :: ([FilePath] -> b) -> IO b
+-- ( <$> getDirectoryContents)     :: (IO [FilePath] -> b) -> FilePath -> b
+
+folders :: FilePath -> IO ()
+folders p = print
+            =<< filterM doesDirectoryExist
+            =<< getQualifiedDirectoryContents p
+
+--files :: FilePath -> IO ()
+--files p = print $ filter not <$> doesDirectoryExist $ getQualifiedDirectoryContents p
+        
