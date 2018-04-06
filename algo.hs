@@ -711,19 +711,18 @@ mainMenu :: [MenuEntry]
 mainMenu = [SimpleIOEntry {text = "Quit",
                            function = (\s -> print $ "test function" ++ s)},
             SimpleIOEntry {text = "Help",
-                           function = showHelp},
-            CopyEntry {from = "/media/224/w40/test.txt",
-                       to = "/home/alexander/tftpboot/test.txt"}]
+                           function = showHelp}]
 
 configMenu :: IO [MenuEntry]
 configMenu = do ls <- fmap lines readConfig
                 return $ map lineToCopyEntry ls
                                
 showMenu :: IO ()
-showMenu = do cfg_menu <- configMenu
-              mapM print (mainMenu ++ cfg_menu)
-              return ()
-
+showMenu = do cfgMenu <- configMenu
+              mapM_ func (mainMenu ++ cfgMenu)
+              where
+                func :: (Show a) => a -> IO ()
+                func s = putStr "- " >> print s 
                                
                                
 lineToCopyEntry :: String -> MenuEntry
