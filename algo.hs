@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 import Control.Monad.State
+import Control.Conditional (ifM)
 import Data.Functor
 import Data.IORef
 import Data.Array.IO
@@ -10,6 +11,7 @@ import Control.Monad
 import System.FilePath.Posix
 import System.Directory
 import qualified Codec.Binary.UTF8.String as UTF8
+import Text.Read
 
 test = putStrLn "hi"
 
@@ -95,7 +97,6 @@ workingDays SixDays = [ Monday
                       ]
 
 data IP = String
-
 show_ip :: IO ()
 show_ip = 
   let ip = "127.0.0.1"
@@ -256,8 +257,8 @@ printFromStateMonad = do
   r <- runStateT (do
                      modify (+1)
                      modify (*2)
-                     s <- get
-                     lift $ print s -- State Int IO ()
+                     s <- Control.Monad.State.get
+                     Control.Monad.State.lift $ print s -- State Int IO ()
                      modify (+3)
                  ) 5
   print r
@@ -455,11 +456,11 @@ io_apply f (x:xs) = do f x
                        io_apply f xs
                        return ()
 
-tt :: Num a => [a] -> [a]
-tt arr = let f = \xs -> case xs of
-                          (x:xs) -> x + 1 : f xs
-                          []     -> []
-         in f arr
+--tt :: Num a => [a] -> [a]
+--tt arr = let f = \xs -> case xs of
+--                          (x:xs) -> x + 1 : f xs
+--                          []     -> []
+--         in f arr
 
 
 headM :: IO [String] -> IO String
@@ -517,8 +518,6 @@ showPathList io_list = do let show_ = \e -> putStrLn e
                           io_apply show_ list
                           return ()
 
-t' :: IO [String]
-t' = grepFolders (listFolder "/home/alexander/")
 
 t'' :: IO [String]
 t'' = grepFiles (listFolder "/home/alexander/")
@@ -532,17 +531,162 @@ t''' path = getDirectoryContents path >>=
 
 getQualifiedDirectoryContents :: FilePath -> IO [FilePath]
 getQualifiedDirectoryContents fp =
-    map (fp </>) . filter (`notElem` [".",".."]) <$> getDirectoryContents fp
+--    map (fp </>) . filter (`notElem` [".",".."]) <$> getDirectoryContents fp
+  map (fp </>) . filter isExpectedFile' <$> getDirectoryContents fp
+  
 
 --                           (<$>) :: Functor f => (a -> b) -> f a -> f b
 -- ( <$> getDirectoryContents "/") :: ([FilePath] -> b) -> IO b
 -- ( <$> getDirectoryContents)     :: (IO [FilePath] -> b) -> FilePath -> b
 
-folders :: FilePath -> IO ()
-folders p = print
-            =<< filterM doesDirectoryExist
+isExpectedFile :: String -> Bool
+isExpectedFile s = case head s of
+                     '.' -> False
+                     _   -> True
+
+isExpectedFile' ('.':[]) =  True
+isExpectedFile' ('.':'.':_) = True
+isExpectedFile' ('.':_) = False
+isExpectedFile' _ = True
+
+folders :: FilePath -> IO [FilePath]
+folders p = filterM doesDirectoryExist
             =<< getQualifiedDirectoryContents p
 
---files :: FilePath -> IO ()
---files p = print $ filter not <$> doesDirectoryExist $ getQualifiedDirectoryContents p
-        
+files :: FilePath -> IO [FilePath]
+files p = filterM doesFileExist
+          =<< getQualifiedDirectoryContents p
+
+printList :: IO [String] -> IO ()
+printList iol = do l <- iol
+                   times <- mapM getModTime l
+                   let t_n = merge [0..(length l)] times
+                   let result = merge t_n l
+                   mapM print result
+                   return ()
+-- getModTime ""
+--timeModifcationArray :: IO [String] -> IO []
+
+merge :: (Show b) => [b] -> [String] -> [String]
+merge []     _      = []
+merge _      []     = []
+merge (x:xs) (y:ys) = (show x ++ " " ++ y) : (merge xs ys)
+
+--listToNumberingList :: (Show a) => [a] -> [String]
+--listToNumberingList = 
+
+
+ioLength :: IO [a] -> IO Int
+ioLength x = fmap (length) x
+
+ioOrderingNumbers :: IO [a] -> IO [Int]
+ioOrderingNumbers iol = do len <- ioLength iol
+                           return [1..len]
+
+allEntries :: FilePath -> IO [FilePath]
+allEntries p = do l1 <- files p
+                  l2 <- folders p
+                  return (l1 ++ l2)
+  
+askToChoosePath :: FilePath -> IO Int
+askToChoosePath p = do printList $ allEntries p
+                       putStr "Your choise: "
+                       result <- getLine
+                       return $ read result
+
+askToChoosePath' :: FilePath -> IO FilePath
+askToChoosePath' p = do list <- allEntries p
+                        printList $ return list
+                        putStr "Your choise: "
+                        result <- getLine
+                        case readMaybe result of
+                          Just r -> return $ list !! r
+                          _      -> return p
+
+askToChoosePath'' :: FilePath -> String -> IO FilePath
+askToChoosePath'' p q = do list <- allEntries p
+                           printList $ return list
+                           putStr q
+                           result <- getLine
+                           case readMaybe result of
+                             Just r -> return $ list !! r
+                             _      -> return p
+
+
+findSourceFile :: FilePath -> IO FilePath
+findSourceFile p = do p_ <- askToChoosePath' p
+                      ifM (doesFileExist p_)
+                        (return p_)
+                        (findSourceFile p_)
+
+configFilePath :: String
+configFilePath = "/home/alexander/.hspfm"
+                        
+--writeCOnfig :: IO String
+readConfig = readFile configFilePath
+
+menuEntries :: IO [String]
+menuEntries = do text <- readConfig
+                 return (lines text)
+
+ui = do me <- menuEntries
+        print "From config file:"
+        printList $ return me
+        result <- getLine
+        case result of
+          "q" -> print "quit"
+          "h" -> mapM_ putStrLn ["Help:",
+                                 "q - quit",
+                                 "h - help",
+                                 "a - add new entry",
+                                 "[0..] - choose menu entry",
+                                 ""]
+                 >> ui
+          "a" -> print "add new entry" >> addNewEntry
+          _   -> case readMaybe result of
+                   Just x -> if (x < length me)
+                             then doEntry (me !! x) --print (me !! (x - 1))
+                             else ui
+                   _      -> ui
+          
+doEntry :: String -> IO ()
+doEntry str = case length ws of --do print $ words str
+                2 -> myCopyFile w1 w2
+                _ -> print ("Failed to parse " ++ str)
+                where
+                  ws = words str
+                  w1 = ws !! 0
+                  w2 = ws !! 1
+
+andM :: IO Bool -> IO Bool -> IO Bool
+andM ioa iob = do a <- ioa
+                  b <- iob
+                  return (a && b)
+
+myCopyFile :: FilePath -> FilePath -> IO ()
+myCopyFile f1 f2 = ifM ((doesFileExist f1) `andM` (doesFileExist f2))
+                   (copyFile f1 f2)
+                   (print $ "Failed copy " ++ f1 ++ " -> " ++ f2)
+
+addNewEntry :: IO ()
+addNewEntry = print "Not implemented yet"
+
+
+getModTime :: FilePath -> IO String
+getModTime x@('/':_) = return x
+getModTime p = do x <- getModificationTime p
+                  let arr = words (show x)
+                  let time = arr !! 1
+                  return $ hms time
+                    where
+                      hms (a:b:':':d:e:':':g:k:_) = [a,b,':',d,e,':',g,k]
+                      hms _ = "xx:xx:xx"
+  
+t = getModTime "/home/alexander/.hspfm"
+
+data MenuEntry = CopyEntry {from :: String,
+                           to :: String,
+                           to_time :: String,
+                           from_time :: String} |
+                 SimpleIOEntry {text :: String,
+                               function :: String}
