@@ -621,14 +621,24 @@ findSourceFile p = do p_ <- askToChoosePath' p
                         (findSourceFile p_)
 
 configFilePath :: String
-configFilePath = "/home/alexander/.hspfm"
+--configFilePath = "/home/alexander/.hspfm"
+configFilePath = "/home/lup/.hspfm"
                         
 --writeCOnfig :: IO String
-readConfig = readFile configFilePath
+readConfig = do exists <- doesFileExist configFilePath
+                if exists
+                  then do text <- readFile configFilePath
+                          return (Just text)
+                  else print (configFilePath ++ " not exists !!!")
+                       >> return Nothing
 
 menuEntries :: IO [String]
-menuEntries = do text <- readConfig
-                 return (lines text)
+--menuEntries = do text <- readConfig
+--                 return (lines text)
+menuEntries = do maybe_text <- readConfig
+                 case maybe_text of
+                   (Just text) -> return (lines text)
+                   Nothing -> return []
 
 ui = do me <- menuEntries
         print "From config file:"
@@ -683,7 +693,7 @@ getModTime p = do x <- getModificationTime p
                       hms (a:b:':':d:e:':':g:k:_) = [a,b,':',d,e,':',g,k]
                       hms _ = "xx:xx:xx"
   
-t = getModTime "/home/alexander/.hspfm"
+--t = getModTime "/home/alexander/.hspfm"
 
 data MenuEntry = CopyEntry {entry_id :: Integer,
                             from :: FilePath,
@@ -718,8 +728,19 @@ mainMenu = [SimpleIOEntry {entry_id = 0,
                            function = showHelp}]
 
 configMenu :: IO [MenuEntry]
-configMenu = do ls <- fmap lines readConfig
+configMenu = do maybe_config <- readConfig
+                let ls = case maybe_config of
+                           (Just config) -> lines config
+                           Nothing ->  []
                 return $ map lineToCopyEntry ls
+
+--                ls <- fmap lines config
+--                return $ map lineToCopyEntry ls
+--                where
+--                  maybe_text <- 
+--                  config = condM readConfig of
+ --                            (Just text) -> text
+ --                            Nothing -> ""
                                
 showMenu :: IO ()
 showMenu = do menu <- fillMenuEntries (fmap ((++) mainMenu) configMenu) 
