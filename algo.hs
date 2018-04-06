@@ -714,7 +714,7 @@ data ModificationTime = ModificationTime {hh :: Int,
 instance Show ModificationTime where
   show (ModificationTime h m s) = show h ++ ":" ++
                                   show m ++ ":" ++
-                                  show s ++ ":"
+                                  show s
 
 showHelp :: String -> IO ()
 showHelp str = print "This is Help message"
@@ -733,21 +733,6 @@ configMenu = do maybe_config <- readConfig
                            (Just config) -> lines config
                            Nothing ->  []
                 return $ map lineToCopyEntry ls
-
---                ls <- fmap lines config
---                return $ map lineToCopyEntry ls
---                where
---                  maybe_text <- 
---                  config = condM readConfig of
- --                            (Just text) -> text
- --                            Nothing -> ""
-                               
-showMenu :: IO ()
-showMenu = do menu <- fillMenuEntries (fmap ((++) mainMenu) configMenu) 
-              mapM_ func menu
-              where
-                func :: MenuEntry -> IO ()
-                func s = print s
 
 changeEntryId :: MenuEntry -> Integer -> MenuEntry
 changeEntryId (CopyEntry _ from to) id = CopyEntry id from to
@@ -781,3 +766,28 @@ getModTime' p = do x <- getModificationTime p
                                           (read [c,d] :: Int)
                                           (read [e,f] :: Int)
                        hms _ = ModificationTime 0 0 0
+
+showMenu :: IO ()
+showMenu = do menu <- fillMenuEntries (fmap ((++) mainMenu) configMenu) 
+              mapM_ func menu
+              where
+                func :: MenuEntry -> IO ()
+                func s = printMenuEntry s
+
+defaultTime :: IO ModificationTime
+defaultTime = return (ModificationTime 0 0 0)
+
+printMenuEntry :: MenuEntry -> IO ()
+printMenuEntry (CopyEntry id from to) = do from_exists <- doesFileExist from
+                                           to_exists <- doesFileExist to
+                                           from_time <- case from_exists of
+                                                          True -> getModTime' from
+                                                          _ -> defaultTime
+                                           to_time <- case to_exists of
+                                                        True -> getModTime' to
+                                                        _ -> defaultTime
+                                           print ((show id) ++ " (" ++ (show from_time) ++ ")" ++
+                                                 from ++ " -> (" ++ (show to_time) ++ ")" ++
+                                                 to)
+printMenuEntry (SimpleIOEntry id text function) = print ((show id) ++ " " ++ text)
+
