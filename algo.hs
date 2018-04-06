@@ -12,6 +12,7 @@ import System.FilePath.Posix
 import System.Directory
 import qualified Codec.Binary.UTF8.String as UTF8
 import Text.Read
+import Text.Show.Functions
 
 test = putStrLn "hi"
 
@@ -684,9 +685,61 @@ getModTime p = do x <- getModificationTime p
   
 t = getModTime "/home/alexander/.hspfm"
 
-data MenuEntry = CopyEntry {from :: String,
-                           to :: String,
-                           to_time :: String,
-                           from_time :: String} |
+data MenuEntry = CopyEntry {from :: FilePath,
+                           to :: FilePath} |
                  SimpleIOEntry {text :: String,
-                               function :: String}
+                               function :: (String -> IO ())}
+--  deriving (Show)
+
+instance Show MenuEntry where
+  show (CopyEntry from to) =
+    "copyEntry   " ++ from ++ " -> " ++ to
+  show (SimpleIOEntry text f) = "SimpleEntry " ++ text
+
+data ModificationTime = ModificationTime {hh :: Int,
+                                          mm :: Int,
+                                          ss :: Int}
+instance Show ModificationTime where
+  show (ModificationTime h m s) = show h ++ ":" ++
+                                  show m ++ ":" ++
+                                  show s ++ ":"
+
+showHelp :: String -> IO ()
+showHelp str = print "This is Help message"
+
+mainMenu :: [MenuEntry]
+mainMenu = [SimpleIOEntry {text = "Quit",
+                           function = (\s -> print $ "test function" ++ s)},
+            SimpleIOEntry {text = "Help",
+                           function = showHelp},
+            CopyEntry {from = "/media/224/w40/test.txt",
+                       to = "/home/alexander/tftpboot/test.txt"}]
+
+configMenu :: IO [MenuEntry]
+configMenu = do ls <- fmap lines readConfig
+                return $ map lineToCopyEntry ls
+                               
+showMenu :: IO ()
+showMenu = do cfg_menu <- configMenu
+              mapM print (mainMenu ++ cfg_menu)
+              return ()
+
+                               
+                               
+lineToCopyEntry :: String -> MenuEntry
+lineToCopyEntry str = CopyEntry from to
+  where ws = words str
+        from = ws !! 0
+        to = ws !! 1
+
+getModTime' :: FilePath -> IO ModificationTime
+getModTime' p = do x <- getModificationTime p
+                   let arr = words (show x)
+                   let time = arr !! 1
+                   return $ hms time
+                     where
+                       hms (a:b:':':c:d:':':e:f:_) =
+                         ModificationTime (read [a,b] :: Int)
+                                          (read [c,d] :: Int)
+                                          (read [e,f] :: Int)
+                       hms _ = ModificationTime 0 0 0
