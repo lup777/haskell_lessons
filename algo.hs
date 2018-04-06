@@ -685,16 +685,18 @@ getModTime p = do x <- getModificationTime p
   
 t = getModTime "/home/alexander/.hspfm"
 
-data MenuEntry = CopyEntry {from :: FilePath,
-                           to :: FilePath} |
-                 SimpleIOEntry {text :: String,
-                               function :: (String -> IO ())}
+data MenuEntry = CopyEntry {entry_id :: Integer,
+                            from :: FilePath,
+                            to :: FilePath} |
+                 SimpleIOEntry {entry_id :: Integer,
+                                text :: String,
+                                function :: (String -> IO ())}
 --  deriving (Show)
 
 instance Show MenuEntry where
-  show (CopyEntry from to) =
-    "copyEntry   " ++ from ++ " -> " ++ to
-  show (SimpleIOEntry text f) = "SimpleEntry " ++ text
+  show (CopyEntry id from to) =
+    (show id) ++ " " ++ from ++ " -> " ++ to
+  show (SimpleIOEntry id text f) = (show id) ++ " " ++ text
 
 data ModificationTime = ModificationTime {hh :: Int,
                                           mm :: Int,
@@ -708,9 +710,11 @@ showHelp :: String -> IO ()
 showHelp str = print "This is Help message"
 
 mainMenu :: [MenuEntry]
-mainMenu = [SimpleIOEntry {text = "Quit",
+mainMenu = [SimpleIOEntry {entry_id = 0,
+                           text = "Quit",
                            function = (\s -> print $ "test function" ++ s)},
-            SimpleIOEntry {text = "Help",
+            SimpleIOEntry {entry_id = 0,
+                           text = "Help",
                            function = showHelp}]
 
 configMenu :: IO [MenuEntry]
@@ -718,15 +722,29 @@ configMenu = do ls <- fmap lines readConfig
                 return $ map lineToCopyEntry ls
                                
 showMenu :: IO ()
-showMenu = do cfgMenu <- configMenu
-              mapM_ func (mainMenu ++ cfgMenu)
+showMenu = do menu <- fillMenuEntries (fmap ((++) mainMenu) configMenu) 
+              mapM_ func menu
               where
-                func :: (Show a) => a -> IO ()
-                func s = putStr "- " >> print s 
-                               
-                               
+                func :: MenuEntry -> IO ()
+                func s = print s
+
+changeEntryId :: MenuEntry -> Integer -> MenuEntry
+changeEntryId (CopyEntry _ from to) id = CopyEntry id from to
+changeEntryId (SimpleIOEntry _ text function) id = SimpleIOEntry id text function
+
+updateMenuId :: [MenuEntry] -> Integer -> [MenuEntry]
+updateMenuId [] _ = []
+updateMenuId (x:xs) id = [changeEntryId x id] ++ (updateMenuId xs (id + 1))
+
+
+fillMenuEntries :: IO [MenuEntry] -> IO [MenuEntry]
+fillMenuEntries ioa = do a <- ioa
+                         return (updateMenuId a 0)
+                         
+                            
+                                      
 lineToCopyEntry :: String -> MenuEntry
-lineToCopyEntry str = CopyEntry from to
+lineToCopyEntry str = CopyEntry 0 from to
   where ws = words str
         from = ws !! 0
         to = ws !! 1
