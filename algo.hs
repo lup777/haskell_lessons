@@ -726,7 +726,17 @@ showMenu = do menu <- fillMenuEntries (fmap ((++) mainMenu) configMenu)
               mapM_ func menu
               where
                 func :: MenuEntry -> IO ()
-                func s = print s
+                func s = printMenuEntry s
+
+printMenuEntry :: MenuEntry -> IO ()
+printMenuEntry e@(SimpleIOEntry _ _ _) = print e
+printMenuEntry (CopyEntry id_ from_ to_) = do from <- io_from
+                                              to <- io_to
+                                              print (id ++ from ++ to)
+                                              where
+                                                id = show id_
+                                                io_from = fmap show (getModTime' from_)
+                                                io_to = fmap show (getModTime' to_)
 
 changeEntryId :: MenuEntry -> Integer -> MenuEntry
 changeEntryId (CopyEntry _ from to) id = CopyEntry id from to
@@ -738,10 +748,16 @@ updateMenuId (x:xs) id = [changeEntryId x id] ++ (updateMenuId xs (id + 1))
 
 
 fillMenuEntries :: IO [MenuEntry] -> IO [MenuEntry]
-fillMenuEntries ioa = do a <- ioa
-                         return (updateMenuId a 0)
-                         
-                            
+fillMenuEntries ioa = do menu0 <- ioa
+                         return (updateMenuId menu0 0)
+
+--fillMenuModTime :: IO [MenuEntry] -> IO [MenuEntry]
+--fillMenuModTime ioa = do arr <- [MenuEntry]
+
+--updateEntryTime :: MenuEntry -> MenuEntry
+--updateEntryTime (CopyEntry _ from to) id = CopyEntry id from to
+--updateEntryTime (SimpleIOEntry _ text function) id = SimpleIOEntry id text function
+
                                       
 lineToCopyEntry :: String -> MenuEntry
 lineToCopyEntry str = CopyEntry 0 from to
