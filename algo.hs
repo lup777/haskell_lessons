@@ -798,9 +798,10 @@ getModTime' p = do x <- getModificationTime p
                                           (read [e,f] :: Int)
                        hms _ = ModificationTime 0 0 0
 
-showMenu :: IO ()
+showMenu :: IO [MenuEntry]
 showMenu = do menu <- fillMenuEntries (fmap ((++) mainMenu) configMenu) 
               mapM_ func menu
+              return menu
               where
                 func :: MenuEntry -> IO ()
                 func s = printMenuEntry s
@@ -822,3 +823,37 @@ printMenuEntry (CopyEntry id from to) = do from_exists <- doesFileExist from
                                                  to)
 printMenuEntry (SimpleIOEntry id text function) = print ((show id) ++ " " ++ text)
 
+data Answer = AnswerNum Int | AnswerString String | AnswerNop
+
+requestAnswer :: String -> IO Answer
+requestAnswer msg = do putStr msg
+                       answer <- getLine
+                       case (readMaybe answer :: Maybe Int) of
+                         (Just i) -> return (AnswerNum i)
+                         (Nothing) -> case (readMaybe answer :: Maybe String) of
+                                      (Just str) -> return (AnswerString str)
+                                      (Nothing) -> return AnswerNop
+
+start :: IO ()
+start = do menu <- showMenu
+           answer <- requestAnswer "please, select entry: "
+           case answer of
+             (AnswerNum n) -> (callEntry $ menu !! n) >> start
+             (AnswerString "q") -> print "GoodBy!"
+             (AnswerString c) -> (print "not implemented") >> start
+             _ -> print "What ? 0_o"
+           
+
+callEntry :: MenuEntry -> IO ()
+callEntry (CopyEntry id f t) = do maybeCopyFile f t
+                                  return ()
+callEntry e = print ("CALL: " ++ show e)
+
+
+maybeCopyFile :: FilePath -> FilePath -> IO (Maybe Bool)
+maybeCopyFile f t = do f_exist <- doesFileExist f
+                       if (f_exist)
+                         then do copyFile f t
+                                 return (Just True)
+                         else do print "File not exists"
+                                 return Nothing
