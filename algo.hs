@@ -13,6 +13,7 @@ import System.Directory
 import qualified Codec.Binary.UTF8.String as UTF8
 import Text.Read
 import Text.Show.Functions
+import System.Exit
 
 test = putStrLn "hi"
 
@@ -717,12 +718,15 @@ instance Show ModificationTime where
                                   show s
 
 showHelp :: String -> IO ()
-showHelp str = print "This is Help message"
+showHelp str = putStrLn "" >> print "########################"
+               >> print "This is Help message"
+               >> print "########################" >> putStrLn ""
 
 mainMenu :: [MenuEntry]
 mainMenu = [SimpleIOEntry {entry_id = 0,
                            text = "Quit",
-                           function = (\s -> print $ "test function" ++ s)},
+                           function = (\s -> exitSuccess
+                                             >> return ())},
             SimpleIOEntry {entry_id = 0,
                            text = "Help",
                            function = showHelp}]
@@ -838,16 +842,15 @@ start :: IO ()
 start = do menu <- showMenu
            answer <- requestAnswer "please, select entry: "
            case answer of
-             (AnswerNum n) -> (callEntry $ menu !! n) >> start
-             (AnswerString "q") -> print "GoodBy!"
-             (AnswerString c) -> (print "not implemented") >> start
-             _ -> print "What ? 0_o"
+             AnswerNum n -> (callEntry $ menu !! n) >> start
+             _ -> start
            
 
 callEntry :: MenuEntry -> IO ()
 callEntry (CopyEntry id f t) = do maybeCopyFile f t
                                   return ()
 callEntry e = print ("CALL: " ++ show e)
+              >> (function e) " -> "
 
 
 maybeCopyFile :: FilePath -> FilePath -> IO (Maybe Bool)
@@ -857,3 +860,6 @@ maybeCopyFile f t = do f_exist <- doesFileExist f
                                  return (Just True)
                          else do print "File not exists"
                                  return Nothing
+t :: IO Char
+t = do l <- getLine
+       return $ (read l :: Char)
