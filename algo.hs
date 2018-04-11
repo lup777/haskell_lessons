@@ -1,10 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
 import Control.Monad.State
-import Control.Conditional (ifM)
+import Control.Conditional (ifM,condM)
+--import Control.Cond
 import Data.Functor
 import Data.IORef
 import Data.Array.IO
 import System.IO
+import System.Directory
 import System.Process
 import System.Posix.Files
 import Control.Monad
@@ -623,7 +625,7 @@ findSourceFile p = do p_ <- askToChoosePath' p
 
 configFilePath :: String
 --configFilePath = "/home/alexander/.hspfm"
-configFilePath = "/home/lup/.hspfm"
+configFilePath = "/home/alexander/.hspfm"
                         
 --writeCOnfig :: IO String
 readConfig = do exists <- doesFileExist configFilePath
@@ -675,6 +677,11 @@ andM ioa iob = do a <- ioa
                   b <- iob
                   return (a && b)
 
+orM :: IO Bool -> IO Bool -> IO Bool
+orM ioa iob = do a <- ioa
+                 b <- iob
+                 return (a || b)
+
 myCopyFile :: FilePath -> FilePath -> IO ()
 myCopyFile f1 f2 = ifM ((doesFileExist f1) `andM` (doesFileExist f2))
                    (copyFile f1 f2)
@@ -701,7 +708,10 @@ data MenuEntry = CopyEntry {entry_id :: Integer,
                             to :: FilePath} |
                  SimpleIOEntry {entry_id :: Integer,
                                 text :: String,
-                                function :: (String -> IO ())}
+                                function :: (String -> IO ())} |
+                 CopySelected {emtry_id :: Integer,
+                               from :: FilePath,
+                               to :: FilePath}
 --  deriving (Show)
 
 instance Show MenuEntry where
@@ -759,6 +769,8 @@ lineToCopyEntry str = CopyEntry 0 from to
         from = ws !! 0
         to = ws !! 1
 
+-- CopySelected
+
 getModTime' :: FilePath -> IO ModificationTime
 getModTime' p = do x <- getModificationTime p
                    let arr = words (show x)
@@ -815,20 +827,126 @@ start = do menu <- showMenu
              _ -> start
            
 
+--t :: IO Char
+--t = do l <- getLine
+--       return $ (read l :: Char)
+
+data FSEntry = FSFile {fs_id :: Int,
+                       mod_time :: ModificationTime,
+                       path :: FilePath} |
+               FSDir {fs_id :: Int,
+                      mod_time :: ModificationTime,
+                      path :: FilePath}
+
+instance Show FSEntry where
+  show (FSFile id time path) = "F " ++ (show id) ++ " (" ++ (show time) ++ ") " ++ path
+  show (FSDir id time path) = "D " ++ (show id) ++ " (" ++ (show time) ++ ") " ++ path
+
+maybeCreateFSEntry :: FilePath -> IO (Maybe FSEntry)
+maybeCreateFSEntry fp = do file_exists <- doesFileExist fp
+                           dir_exists <- doesDirectoryExist fp
+                           if (file_exists || dir_exists)
+                             then do mtime <- getModTime' fp
+                                     condM [(doesFileExist fp, return (Just (FSFile (-1) mtime fp))),
+                                             (doesDirectoryExist fp, return (Just (FSDir (-1) mtime (fp ++ "/")))),
+                                             (return True, return Nothing)]
+                             else return Nothing
+
+--t :: IO ()
+--t = do maybe_fs_entry <- maybeCreateFSEntry "/home/alexander"
+--       case maybe_fs_entry of
+--         Just fs_entry -> print ("mod time: " ++ (show $ mod_time fs_entry))
+--         Nothing -> print "nothing";
+
+getFSEntries :: FilePath -> IO [FSEntry]
+getFSEntries p = do content <- getDirectoryContents p
+                    let full_path_content = map ((p ++ "/") ++ ) content
+                    fs_entries <- mapM maybeCreateFSEntry full_path_content
+                    let filtered = filter func fs_entries
+                    return (map removeJust filtered)
+                    where
+                      func (Just _) = True
+                      func _        = False
+                      removeJust (Just x) = x
+       
+                    
+enumFsEntries :: [FSEntry] -> Int -> [FSEntry]
+enumFsEntries []     _ = []   
+enumFsEntries (x:xs) n = case x of 
+                           FSFile _ t p -> (FSFile n t p) : (enumFsEntries xs (n+1))
+                           FSDir  _ t p -> (FSDir n t p) : (enumFsEntries xs (n+1))
+
+maybeReadInt :: IO (Maybe Int)
+maybeReadInt = do str <- getLine
+                  return (readMaybe str :: Maybe Int)
+
+askToChoosePath''' :: FilePath -> IO FilePath
+askToChoosePath''' pt = do l <- getFSEntries pt
+                           print "Please, select file: "
+                           mapM_ print (enumFsEntries l 0)
+                           choise <- maybeReadInt
+                           case choise of
+                             Just x -> return $ path (l !! x)
+                             Nothing -> return pt
+
+askToCHooseFSEntry :: FSEntry -> IO FSEntry
+askToCHooseFSEntry x@(FSDir _ _ p) = do l <- getFSEntries p
+                                        print "Please, select file: "
+                                        mapM_ print (enumFsEntries l 0)
+                                        choise <- maybeReadInt
+                                        case choise of
+                                          Just x -> return (l !! x)
+                                          Nothing -> return x
+askToCHooseFSEntry fsf = return fsf
+
+
+keepOrSelectFile :: FilePath -> IO FilePath
+keepOrSelectFile fp = do condM [(doesFileExist fp, return fp)
+                               ,(doesDirectoryExist fp, findFile' fp)
+                               ,(return otherwise, keepOrSelectFile $ takeDirectory fp)]
+
+findFile' :: FilePath -> IO FilePath
+findFile' fp = do selected <- askToChoosePath''' fp
+                  ifM (doesFileExist selected)
+                    (return selected)
+                    (askToChoosePath''' selected)
+
+findFile'' :: FSEntry -> IO FSEntry
+findFile'' fse = case fse of
+                   fsd@(FSDir _ _ _) -> askToCHooseFSEntry fsd
+                   fsf@(FSFile _ _ _) -> return fsf
+                
+
+                                 
 callEntry :: MenuEntry -> IO ()
 callEntry (CopyEntry id f t) = do maybeCopyFile f t
                                   return ()
 callEntry e = print ("CALL: " ++ show e)
               >> (function e) " -> "
 
+rootFSFile :: IO FSEntry
+rootFSFile = do modtime <- (getModTime' "/")
+                return (FSFile (-1) modtime "/")
+
+--findFile''
+
+getSourceFSEntry :: FilePath -> IO FSEntry
+getSourceFSEntry f = do fp <- keepOrSelectFile f
+                        maybe_fs_entry <- maybeCreateFSEntry fp
+                        case maybe_fs_entry of
+                          (Just e) -> return e
+                          Nothing -> rootFSFile
+
+doesPathExist :: FilePath -> IO Bool
+doesPathExist t = (doesFileExist t) `orM` (doesDirectoryExist t)
+
 
 maybeCopyFile :: FilePath -> FilePath -> IO (Maybe Bool)
-maybeCopyFile f t = do f_exist <- doesFileExist f
+maybeCopyFile f t = do file <- getSourceFSEntry f
+                       f_exist <- doesPathExist t
                        if (f_exist)
-                         then do copyFile f t
+                         then do copyFile (path file) t
+                                 print "Copy completed"
                                  return (Just True)
-                         else do print "File not exists"
+                         else do print $ "destination File not exists: " ++ t
                                  return Nothing
-t :: IO Char
-t = do l <- getLine
-       return $ (read l :: Char)
