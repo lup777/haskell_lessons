@@ -4,6 +4,7 @@ import System.Directory
 import System.FilePath.Posix
 import System.Console.Terminal.Size
 import Text.Read
+import System.FilePath.Posix
 
 data MenuEntry = CopyEntry {entry_id :: Int,
                             from :: FSEntry,
@@ -27,9 +28,9 @@ data ModificationTime = ModificationTime {hh :: Int,
                                           mm :: Int,
                                           ss :: Int}
 instance Show ModificationTime where
-  show (ModificationTime h m s) = show h ++ ":" ++
-                                  show m ++ ":" ++
-                                  show s
+  show (ModificationTime h m s) = fixStrLen (show h) 2 ++ ":" ++
+                                  fixStrLen (show m) 2 ++ ":" ++
+                                  fixStrLen (show s) 2
 
 data FSEntry = FSFile {fs_id :: Int,
                        mod_time :: ModificationTime,
@@ -39,8 +40,17 @@ data FSEntry = FSFile {fs_id :: Int,
                       path :: FilePath}
 
 instance Show FSEntry where
-  show (FSFile id time path) = "F" ++ (strId id) ++ "(" ++ (show time) ++ ") " ++ path
-  show (FSDir id time path) = "D" ++ (strId id) ++ "(" ++ (show time) ++ ") " ++ path
+--  show (FSFile id time path) = "F" ++ (strId id) ++ "(" ++ (show time) ++ ") " ++ path
+--  show (FSDir id time path) = "D" ++ (strId id) ++ "(" ++ (show time) ++ ") " ++ path
+  show (FSFile id time path) = "F" ++ (strId id) ++ (show time) ++ " " ++ path
+  show (FSDir id time path) = "D" ++ (strId id) ++ (show time) ++ " " ++ path
+
+fixStrLen :: String -> Int -> String
+fixStrLen str len = if len > (length str)
+                    then [' ' | x <- [1..l], True] ++ str
+                    else cutStr len str
+                      where
+                        l = len - (length str)
 
 defaultId :: Int
 defaultId = (-1)
@@ -153,16 +163,13 @@ maybeGetNum = do str <- getLine
                  return (readMaybe str :: Maybe Int)
 
 start = do printMenuEnumed menu
-           choise <- maybeGetNum
            putStr "Please select menu entry: "
+           choise <- maybeGetNum
            case choise of
              (Just n) -> do m <- menu
                             callMenuEntry (m !! n)
              Nothing -> return ()
            start
-
-callMenuEntry :: MenuEntry -> IO ()
-callMenuEntry e = return ()
 
 theOnly :: [Maybe a] -> [a]
 theOnly []     = []
@@ -176,5 +183,66 @@ listFSEntries fp = do list <- getDirectoryContents fp
                       maybe_entries <- mapM maybeCreateFSEntry (map ((fp ++ "/") ++) list)
                       return (theOnly maybe_entries)
 
-t = do entries <- listFSEntries "/home"
-       mapM_ (putStrLn . show) entries
+enumFS :: [FSEntry] -> Int -> [FSEntry]
+enumFS [] _     = []
+enumFS (x:xs) n = (setFSId x n) : (enumFS xs (n+1))
+                  where
+                    setFSId (FSFile _ m p) n_ = FSFile n_ m p
+                    setFSId (FSDir _ m p) n_ = FSDir n_ m p
+
+printFSEnumed :: FSEntry -> IO [FSEntry]
+printFSEnumed fse = do entries <- listFSEntries (path fse)
+                       let enumed = enumFS entries 0
+                       mapM_ printFSEntry enumed
+                       return enumed
+
+printFSEntry :: FSEntry -> IO ()
+printFSEntry (FSFile i t p) = do  
+  tw <- termWidth
+  let w = fromIntegral (tw - 10)
+  putStrLn $ "F " ++ (strId i) ++ " " ++ (show t) ++ " "
+    ++ (fixStrLen (takeFileName p) w)
+printFSEntry (FSDir i t p) = do
+  tw <- termWidth
+  let w = fromIntegral (tw - 2)
+  putStrLn $ "D " ++ (strId i) ++ " " ++ (show t) ++ " "
+    ++ (fixStrLen (takeFileName p) w)
+
+-- test FS entry
+tf :: IO FSEntry
+tf = do t <- (getModTime "/home")
+        return (FSFile defaultId t "/home")
+
+askFile :: FSEntry -> IO FSEntry
+askFile fse = do enumed <- printFSEnumed fse
+                 putStr "Please select FS entry: "
+                 choise <- maybeGetNum
+                 case choise of
+                   (Just n) -> case enumed !! n of
+                                 (FSDir i t p) -> do clear_path <- canonicalizePath p
+                                                     askFile (FSDir i t clear_path)
+                                 (FSFile _ _ p)    -> print ("selected: " ++ p)
+                                                      >> return (enumed !! n)
+                   Nothing  -> askFile fse
+
+callMenuEntry :: MenuEntry -> IO ()
+callMenuEntry (CopySelected id_ f t) = do ff <- askFile f
+                                          copyFile' ff t  
+callMenuEntry (CopyEntry id_ f t) = do copyFile' f t
+
+copyFile' :: FSEntry -> FSEntry -> IO ()
+copyFile' f@(FSFile _ _ _) t@(FSFile _ _ _) = copyFile (path f) (path t)
+copyFile' f@(FSFile _ _ fp) (FSDir ti tt tp) =
+  do new_tp <- canonicalizePath tpath
+     putStrLn ("copy: " ++ (show f) ++ " -> " ++ new_tp)
+     copyFile (path f) new_tp
+     where
+       tpath = tp ++ "/" ++ (takeFileName fp)
+    
+
+t = do d <- tf
+       askFile d
+
+--sord (Ord instance...)
+-- new menuEntry: Dir -> Dir = select from, select to file name + filter by extension
+-- add data to modTime
