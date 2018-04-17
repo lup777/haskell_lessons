@@ -77,10 +77,10 @@ getModTime p = do x <- getModificationTime p
 
 maybeCreateFSEntry :: FilePath -> IO (Maybe FSEntry)
 maybeCreateFSEntry fp = do condM [(doesFileExist fp,
-                                   do time <- getModTime fp
+                                   getModTime fp >>= \time ->
                                       return . Just $ (FSFile defaultId time fp)),
                                   (doesDirectoryExist fp,
-                                   do time <- getModTime fp
+                                   getModTime fp >>= \time ->
                                       return . Just $ (FSDir defaultId time fp)),
                                   (return True, return Nothing)]
 
@@ -88,14 +88,15 @@ configFileName :: String
 configFileName = ".hspfm"
 
 maybeConfigFile :: IO (Maybe FSEntry)
-maybeConfigFile = do home_path <- getHomeDirectory
-                     maybeCreateFSEntry $ home_path ++ "/" ++ configFileName
+maybeConfigFile = getHomeDirectory
+  >>= \home_path -> maybeCreateFSEntry $ home_path ++ "/" ++ configFileName
 
 findNearestFSEntry :: FilePath -> IO FSEntry
-findNearestFSEntry fp = do maybe_entry <- maybeCreateFSEntry fp
-                           case maybe_entry of
-                             (Just x) -> return x
-                             Nothing  -> findNearestFSEntry (takeDirectory fp)
+findNearestFSEntry fp = maybeCreateFSEntry fp
+                        >>= \maybe_entry ->
+                              case maybe_entry of
+                                (Just x) -> return x
+                                Nothing  -> findNearestFSEntry (takeDirectory fp)
 
 createMenuEntry :: FSEntry -> FSEntry -> MenuEntry
 createMenuEntry f@(FSFile _ _ _) t = CopyEntry defaultId f t
@@ -113,8 +114,7 @@ menu = do (Just cfg) <- maybeConfigFile
           mapM cfgLineToMenuEntry (lines content)
 
 printMenu :: IO [MenuEntry] -> IO ()
-printMenu menu = do m <- menu
-                    mapM_ printMenuEntry m
+printMenu menu = menu >>= \m -> mapM_ printMenuEntry m
 
 
 cutStr :: Int -> String -> String
@@ -154,24 +154,21 @@ enumMenu [] _     = []
 enumMenu (x:xs) n = (setMenuEtryId x n) : (enumMenu xs (n+1))
 
 printMenuEnumed :: IO [MenuEntry] -> IO ()
-printMenuEnumed menu = do m <- menu
-                          printMenu . return $ enumMenu m 0
+printMenuEnumed menu = menu >>= \m -> printMenu . return $ enumMenu m 0
 
 maybeGetNum :: IO (Maybe Int)
-maybeGetNum = do str <- getLine
-                 return (readMaybe str :: Maybe Int)
+maybeGetNum = getLine >>= \str -> return (readMaybe str :: Maybe Int)
 
 drawLine :: IO ()
-drawLine = do tw <- termWidth
-              putStrLn (['-' | x <- [1..(fromIntegral(tw - 2))], True])
+drawLine = termWidth
+           >>= \tw -> putStrLn (['-' | x <- [1..(fromIntegral(tw - 2))], True])
 
 start = do drawLine
            printMenuEnumed menu
            putStr "Please select menu entry: "
            choise <- maybeGetNum
            case choise of
-             (Just n) -> do m <- menu
-                            callMenuEntry (m !! n)
+             (Just n) -> menu >>= \m -> callMenuEntry (m !! n)
              Nothing -> return ()
            start
 
@@ -216,26 +213,25 @@ printFSEntry (FSDir i t p) = do
 
 -- test FS entry
 tf :: IO FSEntry
-tf = do t <- (getModTime "/home")
-        return (FSFile defaultId t "/home")
+tf = do getModTime "/home" >>= \t -> return (FSFile defaultId t "/home")
 
 askFile :: FSEntry -> ([FSEntry] -> [FSEntry]) -> IO FSEntry
 askFile fse filter_ =
-  do enumed <- getAndPrintFSEnumed fse filter_
-     putStr "Please select FS entry: "
-     choise <- maybeGetNum
-     case choise of
-       (Just n) -> case enumed !! n of
-                     (FSDir i t p)  -> do clear_path <- canonicalizePath p
-                                          askFile (FSDir i t clear_path) filter_
-                     (FSFile _ _ p) -> print ("selected: " ++ p)
-                                       >> return (enumed !! n)
-       Nothing  -> askFile fse filter_
+  getAndPrintFSEnumed fse filter_
+  >>= \enumed -> putStr "Please select FS entry: "
+  >> maybeGetNum
+  >>= \choise -> case choise of
+                   (Just n) -> case enumed !! n of
+                                 (FSDir i t p)  -> canonicalizePath p
+                                                   >>= \cp -> askFile (FSDir i t cp) filter_
+                                 (FSFile _ _ p) -> print ("selected: " ++ p)
+                                                   >> return (enumed !! n)
+                   Nothing  -> askFile fse filter_
 
 callMenuEntry :: MenuEntry -> IO ()
 callMenuEntry (CopySelected id_ f t) =
-  do ff <- askFile f (filterFSEtriesByExt (takeExtension (path t)))
-     copyFile' ff t  
+  askFile f (filterFSEtriesByExt (takeExtension (path t)))
+  >>= \ff -> copyFile' ff t  
 callMenuEntry (CopyEntry id_ f t) = do copyFile' f t
 
 copyFile' :: FSEntry -> FSEntry -> IO ()
@@ -243,11 +239,11 @@ copyFile' f@(FSFile _ _ _) t@(FSFile _ _ _) =
   putStrLn ("copy: " ++ (show f) ++ " -> " ++ (show t))
   >> copyFile (path f) (path t)
 copyFile' f@(FSFile _ _ fp) (FSDir ti tt tp) =
-  do new_tp <- canonicalizePath tpath
-     putStrLn ("copy: " ++ (show f) ++ " -> " ++ new_tp)
-     copyFile (path f) new_tp
-     where
-       tpath = tp ++ "/" ++ (takeFileName fp)
+  canonicalizePath tpath
+  >>= \new_tp -> putStrLn ("copy: " ++ (show f) ++ " -> " ++ new_tp)
+  >> copyFile (path f) new_tp
+  where
+    tpath = tp ++ "/" ++ (takeFileName fp)
 
 filterFSEtriesByExt :: String -> [FSEntry] -> [FSEntry]
 filterFSEtriesByExt ext entries = filter predicat entries

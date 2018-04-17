@@ -10,7 +10,8 @@ executable hspfm
                          brick,
                          vty >= 5.18.1,
                          text,
-                         microlens
+                         microlens,
+                         microlens-th
 
 --library
 --    main-is: 	algo.h
