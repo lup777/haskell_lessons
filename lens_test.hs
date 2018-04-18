@@ -237,14 +237,12 @@ intToHexStr'' x
 
 intToHexStr :: Int -> Int -> Writer [String] String
 intToHexStr x n
-  | x >= n = tell [logMsg remainder]
-             >> intToHexStr divresult n >>= \s -> return $ s ++ (toText remainder)
-  | True   = tell [logMsg x]
-             >> return (toText x)
+  | x > 0 = tell [(show x) ++ " / " ++ (show n) ++ " -> " ++ toText remainder]
+            >> intToHexStr divresult n >>= \s -> return $ s ++ (toText remainder)
+  | True  = return []
   where
     divresult = x `div` n
     remainder = x - (divresult * n)
-    logMsg i = (show x) ++ " / " ++ (show n) ++ " -> " ++ toText i
     toText x = case x of
                  10 -> "A"
                  11 -> "B"
