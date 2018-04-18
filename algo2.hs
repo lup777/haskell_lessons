@@ -24,26 +24,37 @@ instance Show MenuEntry where
   show (CopySelected id from to) =
     (strId id) ++ (show from) ++ " -> " ++ (show to)
 
+data ModificationDate = ModificationDate {yy :: Int,
+                                          mo :: Int,
+                                          dd :: Int}
+                        
 data ModificationTime = ModificationTime {hh :: Int,
-                                          mm :: Int,
+                                          mi :: Int,
                                           ss :: Int}
 instance Show ModificationTime where
-  show (ModificationTime h m s) = fixStrLen (show h) 2 ++ ":" ++
-                                  fixStrLen (show m) 2 ++ ":" ++
-                                  fixStrLen (show s) 2
+  show (ModificationTime h m s) = fillZero (show h) 2 ++ ":" ++
+                                  fillZero (show m) 2 ++ ":" ++
+                                  fillZero (show s) 2
+
+instance Show ModificationDate where
+  show (ModificationDate y m d) = fillZero (show y) 4 ++ "-" ++
+                                  fillZero (show m) 2 ++ "-" ++
+                                  fillZero (show d) 2
 
 data FSEntry = FSFile {fs_id :: Int,
                        mod_time :: ModificationTime,
+                       mod_date :: ModificationDate,
                        path :: FilePath} |
                FSDir {fs_id :: Int,
                       mod_time :: ModificationTime,
+                      mod_date :: ModificationDate,
                       path :: FilePath}
 
 instance Show FSEntry where
 --  show (FSFile id time path) = "F" ++ (strId id) ++ "(" ++ (show time) ++ ") " ++ path
 --  show (FSDir id time path) = "D" ++ (strId id) ++ "(" ++ (show time) ++ ") " ++ path
-  show (FSFile id time path) = "F" ++ (strId id) ++ (show time) ++ " " ++ path
-  show (FSDir id time path) = "D" ++ (strId id) ++ (show time) ++ " " ++ path
+  show (FSFile id time date path) = "F" ++ (strId id) ++ (show date)++" "++(show time) ++" " ++ path
+  show (FSDir id time date path) = "D" ++ (strId id) ++ (show date)++" "++(show time) ++ " " ++ path
 
 fixStrLen :: String -> Int -> String
 fixStrLen str len = if len > (length str)
@@ -52,36 +63,60 @@ fixStrLen str len = if len > (length str)
                       where
                         l = len - (length str)
 
+fillStr :: Char -> String -> Int -> String
+fillStr c str len = if len > (length str)
+                    then [c | x <- [1..l], True] ++ str
+                    else cutStr len str
+  where
+    l = len - (length str)
+
+fillZero :: String -> Int -> String
+fillZero = fillStr '0'
+
 defaultId :: Int
 defaultId = (-1)
 
 defaultTime :: ModificationTime
 defaultTime = ModificationTime 0 0 0
 
+defaultDate :: ModificationDate
+defaultDate = ModificationDate 0 0 0
+
 strId :: Int -> String
 strId (-1) = " "
 strId x    = " " ++ (show x) ++ " "
 
-getModTime :: FilePath -> IO ModificationTime
-getModTime p = do x <- getModificationTime p
-                  let arr = words (show x)
-                  let time = arr !! 1
-                  return $ hms time
+doesPathExist :: FilePath -> IO Bool
+doesPathExist p = do doesFileExist p >>= \fe -> doesDirectoryExist p >>= \de -> 
+                       if fe || de then return True else return False
+
+getModTime :: FilePath -> IO (ModificationTime, ModificationDate)
+getModTime p = do doesPathExist p
+                  >>= \exists -> case exists of
+                                   False -> return [(show defaultDate), (show defaultTime)]
+                                   True -> getModificationTime p >>= \x -> return $ words $ show x
+                  >>= \arr -> return $ (hms (arr !! 1), ymd (arr !! 0))
                     where
                       hms (a:b:':':c:d:':':e:f:_) =
-                        ModificationTime (read [a,b] :: Int)
+                        ModificationTime ((read [a,b] :: Int) + 3)
                                          (read [c,d] :: Int)
                                          (read [e,f] :: Int)
-                      hms _ = ModificationTime 0 0 0
+                      hms _ = defaultTime
+                      ymd (y1:y2:y3:y4:'-':m1:m2:'-':d1:d2:_) =
+                        ModificationDate (read [y1,y2,y3,y4] :: Int)
+                                         (read [m1,m2] :: Int)
+                                         (read [d1,d2] :: Int)
+                      ymd _ = defaultDate
+
 
 
 maybeCreateFSEntry :: FilePath -> IO (Maybe FSEntry)
 maybeCreateFSEntry fp = do condM [(doesFileExist fp,
-                                   getModTime fp >>= \time ->
-                                      return . Just $ (FSFile defaultId time fp)),
+                                   getModTime fp >>= \(time, date) ->
+                                      return . Just $ (FSFile defaultId time date fp)),
                                   (doesDirectoryExist fp,
-                                   getModTime fp >>= \time ->
-                                      return . Just $ (FSDir defaultId time fp)),
+                                   getModTime fp >>= \(time, date) ->
+                                      return . Just $ (FSDir defaultId time date fp)),
                                   (return True, return Nothing)]
 
 configFileName :: String
@@ -99,14 +134,17 @@ findNearestFSEntry fp = maybeCreateFSEntry fp
                                 Nothing  -> findNearestFSEntry (takeDirectory fp)
 
 createMenuEntry :: FSEntry -> FSEntry -> MenuEntry
-createMenuEntry f@(FSFile _ _ _) t = CopyEntry defaultId f t
-createMenuEntry f@(FSDir _ _ _) t = CopySelected defaultId f t
+createMenuEntry f@(FSFile _ _ _ _) t = CopyEntry defaultId f t
+createMenuEntry f@(FSDir _ _ _ _) t = CopySelected defaultId f t
 
 cfgLineToMenuEntry :: String -> IO MenuEntry
 cfgLineToMenuEntry str = do let files = words str
+                            (modt, modd) <- getModTime (files !! 1)
                             from <- findNearestFSEntry $ files !! 0
-                            let to = (FSFile defaultId defaultTime (files !! 1))
+                            let to = (FSFile defaultId modt modd (files !! 1))
                             return (createMenuEntry from to)
+                              
+                              
 
 menu :: IO [MenuEntry]
 menu = do (Just cfg) <- maybeConfigFile
@@ -133,9 +171,10 @@ printMenuEntry :: MenuEntry -> IO ()
 printMenuEntry (CopyEntry i f t) =
   do tw <- termWidth
      let w = fromIntegral (tw - 2)
+     let td = \x -> (show $ mod_date x) ++ " " ++ (show $ mod_time x)
      putStrLn $ (strId i) ++ ": " ++ (cutStr (w - 5) (path f))
      putStrLn $ "  => " ++ (cutStr w (path t))
-     putStrLn $ "  => " ++ (show $ mod_time f) ++ " -> " ++ (show $ mod_time t)
+     putStrLn $ "  => " ++ (td f) ++ " -> " ++ (td t)
      putStrLn ['-' | x <- [1 .. (w)], True]
 printMenuEntry (CopySelected i f t) =
   do tw <- termWidth
@@ -188,8 +227,8 @@ enumFS :: [FSEntry] -> Int -> [FSEntry]
 enumFS [] _     = []
 enumFS (x:xs) n = (setFSId x n) : (enumFS xs (n+1))
                   where
-                    setFSId (FSFile _ m p) n_ = FSFile n_ m p
-                    setFSId (FSDir _ m p) n_ = FSDir n_ m p
+                    setFSId (FSFile _ mt md p) n_ = FSFile n_ mt md p
+                    setFSId (FSDir _ mt md p) n_ = FSDir n_ mt md p
 
 getAndPrintFSEnumed :: FSEntry -> ([FSEntry] -> [FSEntry]) -> IO [FSEntry]
 getAndPrintFSEnumed fse filter_ = do entries <- listFSEntries (path fse)
@@ -200,20 +239,20 @@ getAndPrintFSEnumed fse filter_ = do entries <- listFSEntries (path fse)
                                      return enumed
 
 printFSEntry :: FSEntry -> IO ()
-printFSEntry (FSFile i t p) = do  
+printFSEntry (FSFile i t d p) = do  
   tw <- termWidth
-  let w = fromIntegral (tw - 15)
-  putStrLn $ "F " ++ (strId i) ++ " " ++ (show t) ++ " "
+  let w = fromIntegral (tw - 26)
+  putStrLn $ "F " ++ (strId i) ++ " " ++ (show d) ++ " " ++ (show t) ++ " "
     ++ (fixStrLen (takeFileName p) w)
-printFSEntry (FSDir i t p) = do
+printFSEntry (FSDir i t d p) = do
   tw <- termWidth
-  let w = fromIntegral (tw - 15)
-  putStrLn $ "D " ++ (strId i) ++ " " ++ (show t) ++ " "
+  let w = fromIntegral (tw - 26)
+  putStrLn $ "D " ++ (strId i) ++ " " ++ (show t) ++ " " ++  (show t) ++ " "
     ++ (fixStrLen (takeFileName p) w)
 
 -- test FS entry
 tf :: IO FSEntry
-tf = do getModTime "/home" >>= \t -> return (FSFile defaultId t "/home")
+tf = do getModTime "/home" >>= \(t, d) -> return (FSFile defaultId t d "/home")
 
 askFile :: FSEntry -> ([FSEntry] -> [FSEntry]) -> IO FSEntry
 askFile fse filter_ =
@@ -222,9 +261,9 @@ askFile fse filter_ =
   >> maybeGetNum
   >>= \choise -> case choise of
                    (Just n) -> case enumed !! n of
-                                 (FSDir i t p)  -> canonicalizePath p
-                                                   >>= \cp -> askFile (FSDir i t cp) filter_
-                                 (FSFile _ _ p) -> print ("selected: " ++ p)
+                                 (FSDir i t d p)  -> canonicalizePath p
+                                                   >>= \cp -> askFile (FSDir i t d cp) filter_
+                                 (FSFile _ _ _ p) -> print ("selected: " ++ p)
                                                    >> return (enumed !! n)
                    Nothing  -> askFile fse filter_
 
@@ -235,10 +274,10 @@ callMenuEntry (CopySelected id_ f t) =
 callMenuEntry (CopyEntry id_ f t) = do copyFile' f t
 
 copyFile' :: FSEntry -> FSEntry -> IO ()
-copyFile' f@(FSFile _ _ _) t@(FSFile _ _ _) =
-  putStrLn ("copy: " ++ (show f) ++ " -> " ++ (show t))
+copyFile' f@(FSFile _ _ _ _) t@(FSFile _ _ _ _) =
+  putStrLn ("copy: " ++ (show f) ++ " -> " ++ (show t) ++ (show t))
   >> copyFile (path f) (path t)
-copyFile' f@(FSFile _ _ fp) (FSDir ti tt tp) =
+copyFile' f@(FSFile _ _ _ fp) (FSDir ti tt td tp) =
   canonicalizePath tpath
   >>= \new_tp -> putStrLn ("copy: " ++ (show f) ++ " -> " ++ new_tp)
   >> copyFile (path f) new_tp
@@ -249,7 +288,7 @@ filterFSEtriesByExt :: String -> [FSEntry] -> [FSEntry]
 filterFSEtriesByExt ext entries = filter predicat entries
   where
     predicat :: FSEntry -> Bool
-    predicat (FSFile _ _ p)
+    predicat (FSFile _ _ _ p)
       | (ext == takeExtension p) = True
       | True                     = False
     predicat _ = False
