@@ -175,7 +175,81 @@ inc x = do
 -- add 2 3 >>= add 4
 -- inc 2 >>= inc >>= inc >>= inc
 
-t = runWriter $ inc 2
-    >>= \x -> return $ runWriter $ inc x
+--t = runWriter $ inc 2
+--    >>= \x -> return $ runWriter $ inc x
        
 t1 = runWriter $ inc 3
+
+
+intToHexHelper''' :: Int -> Writer String String
+intToHexHelper''' x = do tell (toText remainder)
+                         if divresult >= 16
+                           then intToHexHelper''' divresult
+                           else tell (toText divresult) >> return ""
+  where
+    divresult = x `div` 16
+    remainder = x - (divresult * 16)
+    toText x = case x of
+                 10 -> "A"
+                 11 -> "B"
+                 12 -> "C"
+                 13 -> "D"
+                 14 -> "E"
+                 15 -> "F"
+                 _  -> show x
+
+intToHexStr''' x = revert . snd $ runWriter (intToHexHelper''' x)
+
+intToHexStr' :: Int -> String
+intToHexStr' x
+  | x >= 16 = (intToHexStr' divresult) ++ (toText remainder)
+  | True    = (toText x)
+  where
+    divresult = x `div` 16
+    remainder = x - (divresult * 16)
+    toText x = case x of
+                 10 -> "A"
+                 11 -> "B"
+                 12 -> "C"
+                 13 -> "D"
+                 14 -> "E"
+                 15 -> "F"
+                 _  -> show x
+
+intToHexStr'' :: Int -> Writer [String] String
+intToHexStr'' x
+  | x >= 16 = tell [(show x) ++ " / 16 -> " ++ toText remainder]
+              >> intToHexStr'' divresult >>= \s -> return $ s ++ (toText remainder)
+  | True    = tell [(show x) ++ " / 16 -> " ++ toText x]
+              >> return (toText x)
+              
+  where
+    divresult = x `div` 16
+    remainder = x - (divresult * 16)
+    toText x = case x of
+                 10 -> "A"
+                 11 -> "B"
+                 12 -> "C"
+                 13 -> "D"
+                 14 -> "E"
+                 15 -> "F"
+                 _  -> show x
+
+intToHexStr :: Int -> Int -> Writer [String] String
+intToHexStr x n
+  | x >= n = tell [logMsg remainder]
+             >> intToHexStr divresult n >>= \s -> return $ s ++ (toText remainder)
+  | True   = tell [logMsg x]
+             >> return (toText x)
+  where
+    divresult = x `div` n
+    remainder = x - (divresult * n)
+    logMsg i = (show x) ++ " / " ++ (show n) ++ " -> " ++ toText i
+    toText x = case x of
+                 10 -> "A"
+                 11 -> "B"
+                 12 -> "C"
+                 13 -> "D"
+                 14 -> "E"
+                 15 -> "F"
+                 _  -> show x
