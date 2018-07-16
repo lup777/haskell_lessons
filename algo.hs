@@ -747,7 +747,6 @@ configMenu = do maybe_config <- readConfig
                            (Just config) -> lines config
                            Nothing ->  []
                 return $ map lineToCopyEntry ls
-
 --                ls <- fmap lines config
 --                return $ map lineToCopyEntry ls
 --                where
