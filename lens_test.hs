@@ -243,11 +243,87 @@ intToHexStr x n
   where
     divresult = x `div` n
     remainder = x - (divresult * n)
-    toText x = case x of
-                 10 -> "A"
-                 11 -> "B"
-                 12 -> "C"
-                 13 -> "D"
-                 14 -> "E"
-                 15 -> "F"
-                 _  -> show x
+    toText x | x < 10 = show x
+             | True   = [toEnum (x + 55) :: Char]
+
+
+-- Reader
+data Config = Config { f1 :: String
+                     , f2 :: Int }
+  deriving Show
+
+cfg :: Config
+cfg = Config "Config field 1" 3
+
+  
+tom :: Reader Config String
+tom = do
+  env <- ask
+  return ((show env) ++ "   <- This is Tom")
+
+jerry :: Reader Config String
+jerry = do
+  env <- ask
+  return ((show env) ++ "   <- This is Jerry")
+
+tomAndJerry :: Reader Config String
+tomAndJerry = do
+  ask >>= \c -> tom >>= \t -> jerry >>= \j ->
+    return (t ++ "\n" ++ j ++ "\n" ++ (show c) ++ "   <- tomAndJerry")
+
+t :: String
+t = (runReader tomAndJerry) cfg
+
+
+-- Монады с точки зрения теории категорий
+-- https://habrahabr.ru/post/125782/
+
+-- CATEGORY THEORY --
+-- http://angg.twu.net/MINICATS/awodey__category_theory.pdf
+-- Ричард Фейнман (почитать)
+--
+-- Eilenberg and Mac Lane’s “General theory of natural equivalences”
+--  Это первая публикация теории
+
+-- Категория - это совокупность следующего:
+-- - Объекты [A, B, C ...]. В глобальном смысле просто абстракные объекты
+-- - Стрелки [f, g] такие что поддаются композиции
+
+
+-- f - функция из набора А в другой набор В:
+-- f: A → B
+--
+-- f is defined on all of A and all the values of f are in B
+-- range(f) ⊆ B
+-- f определён(а) для всех объектов набора А, и все значения f являются частью B
+--
+-- имеем две функции: f: A → B, g: B → C
+-- Составная функция: g ◦ f : A → C
+-- ◦ - опреция "композиция". Она ассоциативна:
+--   (h ◦ g) ◦ f = h ◦ (g ◦ f)  -- идентичны
+-- ((h ◦ g) ◦ f)(a) = h(g(f(a)))
+-- Identity function (как на русском?)
+--  1A : A → A -- также называется identity arrow of A
+--    1A(a) = a
+--
+-- f ◦ 1A = f = 1B ◦ f, где f: A → B
+--  (A → A) ◦ (A → B) = A -> B
+--  (B → B) ◦ (A → B) = A -> B -- из-за ассоциативности можно поменять местами стрелки
+-- 
+-- f: A → B
+--   A = dom(f) -- domain
+--   B = cod(f) -- codomain
+-- f: A → B, g: B → C
+--   cod(f) = dom(g)
+--   g ◦ f : A → C -- композиция f и g
+-- ⊆ - "... входят в ..." (являются частью)
+
+f44 :: () -> Int -- функция принимает "единицу"
+f44 () =  44
+
+-- функция возвращающая ничего не может быть запущена
+--absurd' :: Void -> a
+--absurd' = ()
+
+fno :: a -> () -- возвращает "единицу"
+fno _ = ()

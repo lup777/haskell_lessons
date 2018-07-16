@@ -5,6 +5,7 @@ import System.FilePath.Posix
 import System.Console.Terminal.Size
 import Text.Read
 import System.FilePath.Posix
+--import Turtle
 
 data MenuEntry = CopyEntry {entry_id :: Int,
                             from :: FSEntry,
@@ -36,10 +37,31 @@ instance Show ModificationTime where
                                   fillZero (show m) 2 ++ ":" ++
                                   fillZero (show s) 2
 
+instance Ord ModificationTime where
+  compare (ModificationTime hl ml sl) (ModificationTime hr mr sr) =
+    (toSeconds hl ml sl) `compare` (toSeconds hr mr sr)
+    where toSeconds h m s = (h * 3600) + (m * 60) + s
+
+instance Eq ModificationTime where
+  (ModificationTime hl ml sl) == (ModificationTime hr mr sr) =
+    (toSeconds hl ml sl) == (toSeconds hr mr sr)
+    where toSeconds h m s = (h * 3600) + (m * 60) + s
+
 instance Show ModificationDate where
   show (ModificationDate y m d) = fillZero (show y) 4 ++ "-" ++
                                   fillZero (show m) 2 ++ "-" ++
                                   fillZero (show d) 2
+
+instance Ord ModificationDate where
+  compare (ModificationDate yl ml dl) (ModificationDate yr mr dr) =
+    (toDays yl ml dl) `compare` (toDays yr mr dr)
+    where toDays y m d = (y * 360) + (m * 31) + d
+
+instance Eq ModificationDate where
+  (ModificationDate yl ml dl) == (ModificationDate yr mr dr) =
+    (toDays yl ml dl) == (toDays yr mr dr)
+    where toDays y m d = (y * 360) + (m * 31) + d
+  
 
 data FSEntry = FSFile {fs_id :: Int,
                        mod_time :: ModificationTime,
@@ -174,8 +196,17 @@ printMenuEntry (CopyEntry i f t) =
      let td = \x -> (show $ mod_date x) ++ " " ++ (show $ mod_time x)
      putStrLn $ (strId i) ++ ": " ++ (cutStr (w - 5) (path f))
      putStrLn $ "  => " ++ (cutStr w (path t))
-     putStrLn $ "  => " ++ (td f) ++ " -> " ++ (td t)
+     putStrLn $ "  => " ++ (td f) ++ " -> " ++ (td t) ++ " " ++ modifiedField
      putStrLn ['-' | x <- [1 .. (w)], True]
+     where
+       modifiedField
+         | ((mod_date f) == (mod_date t)) = 
+             if ((mod_time f) > (mod_time t))
+             then "*"
+             else ""
+         | ((mod_date f) > (mod_date t)) = "*"
+         | True = ""
+         
 printMenuEntry (CopySelected i f t) =
   do tw <- termWidth
      let w = fromIntegral (tw - 2)
@@ -275,7 +306,7 @@ callMenuEntry (CopyEntry id_ f t) = do copyFile' f t
 
 copyFile' :: FSEntry -> FSEntry -> IO ()
 copyFile' f@(FSFile _ _ _ _) t@(FSFile _ _ _ _) =
-  putStrLn ("copy: " ++ (show f) ++ " -> " ++ (show t) ++ (show t))
+  putStrLn ("copy: " ++ (show f) ++ " -> " ++ (show t))
   >> copyFile (path f) (path t)
 copyFile' f@(FSFile _ _ _ fp) (FSDir ti tt td tp) =
   canonicalizePath tpath
