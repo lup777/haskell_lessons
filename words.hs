@@ -11,7 +11,7 @@ data RuString = RuString String
 
 data Entry = Entry {english :: [String],
                     local   :: [RuString],
-                    synonym :: [String]}
+                    synonym :: [RuString]}
   deriving (Show)
 
 instance Show RuString where
@@ -19,12 +19,23 @@ instance Show RuString where
 
 
 vac :: [Entry]
-vac = [(Entry ["have a go"] [RuString "попытаться"] ["try"]),
-       (Entry ["come up with"] [RuString "придумывать"] [""]),
+vac = [(Entry ["have a go"] [RuString "попытаться"] [RuString "try"]),
+       (Entry ["come up with"] [RuString "придумывать"] [RuString ""]),
        (Entry ["get on"] [RuString "садиться на, садиться в транспортное средство",
                           RuString "звонить/поднять трубку",
                           RuString "двигаться дальше",
-                          RuString "достигать"] [""])]
+                          RuString "достигать"] [RuString ""]),
+       (Entry ["get across"] [RuString "доступно объяснять"] [RuString "she can get across even the most complicated rule"]),
+       (Entry ["get through to"] [RuString "связываться по телефону"] [RuString "I can't get through to them. Не могу до них дозвониться"]),
+       (Entry ["be out"] [RuString "отсутствовать"] [RuString ""]),
+       (Entry ["be off"] [RuString "уезжать",
+                          RuString "уходить",
+                          RuString "быть не работающим, свобоюным"] [RuString ""]),
+       (Entry ["be over"] [RuString "завершиться",
+                           RuString "окончиться"] [RuString ""]),
+       (Entry ["be up to"] [RuString "намереваться",
+                            RuString "собираться что-то сделать",
+                            RuString "зависеть от"] [RuString ""])]
 
 getRandomVacEntry :: IO Entry
 getRandomVacEntry = (randomRIO (0, (length vac) - 1 ) :: IO Int) >>= \num -> return (vac !! num)
@@ -54,3 +65,4 @@ isInVac str (x:xs)
   
 main = checkRandomWord >> putStrLn ""
 
+-- https://preply.com/blog/2016/02/02/90-anglijskih-frazovyh-glagolov-na-vse-sluchai-zhizni/
