@@ -32,7 +32,7 @@ getRandomVacEntry = (randomRIO (0, (length vac) - 1 ) :: IO Int) >>= \num -> ret
 
 
 checkRandomWord :: IO ()
-checkRandomWord = getRandomVacEntry >>= \entry -> checkWord entry
+checkRandomWord = getRandomVacEntry >>= checkWord
 
 checkWord :: Entry -> IO ()
 checkWord entry = checkEnglish entry >>=
@@ -40,7 +40,7 @@ checkWord entry = checkEnglish entry >>=
              else                   putStrLn $ "You are not Right   -> " ++ (show entry)
 
 checkEnglish :: Entry -> IO Bool
-checkEnglish entry = requestEnglish entry >>= \answer -> return $ (isInVac answer (english entry))
+checkEnglish entry = requestEnglish entry >>= \answer -> return $ isInVac answer $ english entry
 
 requestEnglish :: Entry -> IO String
 requestEnglish entry = do putStr ("== " ++ (show . local $ entry ) ++ " ? ")
@@ -51,7 +51,6 @@ isInVac str [] = False
 isInVac str (x:xs)
   | (isSubsequenceOf str x) == True = True
   | otherwise                       = isInVac str xs 
--- TO DO !!!!!!!!
-
+  
 main = checkRandomWord >> putStrLn ""
 
