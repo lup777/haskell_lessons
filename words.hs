@@ -94,7 +94,7 @@ learnWerbs vac_ = maybeGetRandomVacEntry vac_ >>=
                               Nothing -> return ()
 
 showResult :: Entry -> Bool -> [Entry] -> IO ()
-showResult entry res vac = if res then do printGreen $ "You are Right :-)   -> " ++ (show entry)
+showResult entry res vac = if res then do printYellow $ "You are Right :-)   -> " ++ (show entry)
                            else           printRed $ "You are not Right   -> " ++ (show entry)
 
 without :: [Entry] -> Entry -> [Entry]
@@ -105,22 +105,22 @@ without (x:xs) entry
 
 main = do learnWerbs vac
 
--- https://preply.com/blog/2016/02/02/90-anglijskih-frazovyh-glagolov-na-vse-sluchai-zhizni/
-
-
-
----- SANDER -----
-
-printGreen :: String -> IO ()
-printGreen str = do setSGR [SetColor Foreground Vivid Yellow]
-                    --setSGR [SetColor Background Vivid Blue]
-                    putStrLn str
-                    setSGR [Reset]
+printYellow :: String -> IO ()
+printYellow str = do setSGR [SetColor Foreground Vivid Yellow]
+                     --setSGR [SetColor Background Vivid Blue]
+                     putStrLn str
+                     setSGR [Reset]
 
 printRed :: String -> IO ()
 printRed str = do setSGR [SetColor Foreground Vivid Red]
                   putStrLn str
                   setSGR [Reset]
+
+-- https://preply.com/blog/2016/02/02/90-anglijskih-frazovyh-glagolov-na-vse-sluchai-zhizni/
+
+
+
+---- SANDER -----
 
 counter1 :: State Int String
 counter1 = do modify (+1)
