@@ -5,6 +5,7 @@ import System.FilePath.Posix
 import System.Console.Terminal.Size
 import Text.Read
 import System.FilePath.Posix
+import System.Console.ANSI
 --import Turtle
 
 data MenuEntry = CopyEntry {entry_id :: Int,
@@ -194,10 +195,14 @@ printMenuEntry (CopyEntry i f t) =
   do tw <- termWidth
      let w = fromIntegral (tw - 2)
      let td = \x -> (show $ mod_date x) ++ " " ++ (show $ mod_time x)
+     case (modifiedField == "*") of
+       True -> setSGR [SetColor Foreground Vivid Yellow]
+       _ -> setSGR [SetColor Foreground Vivid Green]
      putStrLn $ (strId i) ++ ": " ++ (cutStr (w - 5) (path f))
      putStrLn $ "  => " ++ (cutStr w (path t))
      putStrLn $ "  => " ++ (td f) ++ " -> " ++ (td t) ++ " " ++ modifiedField
      putStrLn ['-' | x <- [1 .. (w)], True]
+     setSGR [Reset]
      where
        modifiedField
          | ((mod_date f) == (mod_date t)) = 
@@ -235,7 +240,9 @@ drawLine = termWidth
 
 start = do drawLine
            printMenuEnumed menu
+           setSGR [SetColor Foreground Vivid Blue]
            putStr "Please select menu entry: "
+           setSGR [Reset]
            choise <- maybeGetNum
            case choise of
              (Just n) -> menu >>= \m -> callMenuEntry (m !! n)
