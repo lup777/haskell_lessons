@@ -43,7 +43,9 @@ vac = [ Entry ["have a go"] [RuString "попытаться"] [RuString "try"]
                           , RuString "окончиться"] [RuString ""]
       , Entry ["be up to"] [ RuString "намереваться"
                            , RuString "собираться что-то сделать"
-                           , RuString "зависеть от"] [RuString ""]] ++ conditionals
+                           , RuString "зависеть от"] [RuString ""]
+      , Entry ["pull out"] [ RuString "вытаскивать (из сумки), выходить (из боя, предприятия)"] [RuString]
+      , Entry ["pass by"] [RuString "проходить мимо"] [RuString ""]] ++ conditionals
 
 conditionals :: [Entry]
 conditionals = [ Entry ["If you heat water, it boils"] [RuString "Если вы нагреваете воду, она кипит"] [RuString "0 type"]

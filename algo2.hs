@@ -6,6 +6,11 @@ import System.Console.Terminal.Size
 import Text.Read
 import System.FilePath.Posix
 import System.Console.ANSI
+import qualified Codec.Archive.Tar as Tar
+import Codec.Archive.Tar.Check (checkSecurity)
+import qualified Codec.Compression.GZip as GZip
+import qualified Data.ByteString.Lazy as BS
+import System.Process
 --import Turtle
 
 data MenuEntry = CopyEntry {entry_id :: Int,
@@ -14,10 +19,18 @@ data MenuEntry = CopyEntry {entry_id :: Int,
                  SimpleIOEntry {entry_id :: Int,
                                 text :: String,
                                 function :: (String -> IO ())} |
-                 CopySelected {emtry_id :: Int,
+                 CopySelected {entry_id :: Int,
                                from :: FSEntry,
-                               to :: FSEntry}
---  deriving (Show)
+                               to :: FSEntry} |
+                 TarEntry {entry_id :: Int,
+                            from :: FSEntry,
+                            to :: FSEntry,
+                            ftype :: String} |
+                 TarEntrySelected {entry_id :: Int,
+                                   from :: FSEntry,
+                                   to :: FSEntry,
+                                   ftype :: String}
+  --  deriving (Show)
 
 instance Show MenuEntry where
   show (CopyEntry id from to) =
@@ -25,6 +38,10 @@ instance Show MenuEntry where
   show (SimpleIOEntry id text f) = (strId id) ++ text
   show (CopySelected id from to) =
     (strId id) ++ (show from) ++ " -> " ++ (show to)
+  show (TarEntry id from to ft) =
+    (strId id) ++ (show from) ++ " -> " ++ (show to) ++ " (" ++ ft ++ ")"
+  show (TarEntrySelected id from to ft) =
+    (strId id) ++ (show from) ++ " -> " ++ (show to) ++ " (" ++ ft ++ ")"
 
 data ModificationDate = ModificationDate {yy :: Int,
                                           mo :: Int,
@@ -156,17 +173,30 @@ findNearestFSEntry fp = maybeCreateFSEntry fp
                                 (Just x) -> return x
                                 Nothing  -> findNearestFSEntry (takeDirectory fp)
 
-createMenuEntry :: FSEntry -> FSEntry -> MenuEntry
-createMenuEntry f@(FSFile _ _ _ _) t = CopyEntry defaultId f t
-createMenuEntry f@(FSDir _ _ _ _) t = CopySelected defaultId f t
+createCopyMenuEntry :: FSEntry -> FSEntry -> MenuEntry
+createCopyMenuEntry f@(FSFile _ _ _ _) t = CopyEntry defaultId f t
+createCopyMenuEntry f@(FSDir _ _ _ _) t = CopySelected defaultId f t
+
+createMenuEntry :: [String] -> IO MenuEntry
+createMenuEntry fields = do 
+  case fields of
+    ("tar":xs) -> do (modt, modd) <- getModTime (fields !! 2)
+                     from <- findNearestFSEntry $ fields !! 1
+                     let to = (FSFile defaultId modt modd (fields !! 2))
+                     return $ createTarMenuEntry from to (fields !! 3)
+    othervise -> do (modt, modd) <- getModTime (fields !! 1)
+                    from <- findNearestFSEntry $ fields !! 0
+                    let to = (FSFile defaultId modt modd (fields !! 1))
+                    return $ createCopyMenuEntry from to
+                              
+                                    
+createTarMenuEntry :: FSEntry -> FSEntry -> String -> MenuEntry
+createTarMenuEntry f@(FSFile _ _ _ _) t filter = TarEntry defaultId f t filter
+createTarMenuEntry f@(FSDir _ _ _ _) t filter= TarEntrySelected defaultId f t filter
 
 cfgLineToMenuEntry :: String -> IO MenuEntry
-cfgLineToMenuEntry str = do let files = words str
-                            (modt, modd) <- getModTime (files !! 1)
-                            from <- findNearestFSEntry $ files !! 0
-                            let to = (FSFile defaultId modt modd (files !! 1))
-                            return (createMenuEntry from to)
-                              
+cfgLineToMenuEntry str = do createMenuEntry $ words str
+                                
                               
 
 menu :: IO [MenuEntry]
@@ -204,25 +234,46 @@ printMenuEntry (CopyEntry i f t) =
      putStrLn ['-' | x <- [1 .. (w)], True]
      setSGR [Reset]
      where
-       modifiedField
-         | ((mod_date f) == (mod_date t)) = 
-             if ((mod_time f) > (mod_time t))
-             then "*"
-             else ""
-         | ((mod_date f) > (mod_date t)) = "*"
-         | True = ""
-         
-printMenuEntry (CopySelected i f t) =
-  do tw <- termWidth
-     let w = fromIntegral (tw - 2)
-     putStrLn $ (strId i) ++ ": " ++ (cutStr (w - 5) (path f))
+       modifiedField = case whetherFSEntryNeedsUpdate f t of
+                         True -> "*"
+                         otherwise -> ""
+
+printMenuEntry (CopySelected i f t) = printMenuEntry (CopyEntry i f t)
+
+printMenuEntry (TarEntrySelected i f t ft) =
+  do w <- terminalWidth
+     case (modifiedField == "*") of
+       True -> setSGR [SetColor Foreground Vivid Yellow]
+       _ -> setSGR [SetColor Foreground Vivid Green]
+     putStrLn $ (strId i) ++ ": TAR ("++ ft ++ ")" ++ (cutStr (w - 5) (path f))
      putStrLn $ "  => " ++ (cutStr w (path t))
-     putStrLn $ "  => " ++ (show $ mod_time f) ++ " -> " ++ (show $ mod_time t)
+     putStrLn $ "  => " ++ (showModDateTime f) ++ " -> "
+       ++ (showModDateTime t) ++ " " ++ modifiedField
      putStrLn ['-' | x <- [1 .. (w)], True]
+     setSGR [Reset]
+       where
+         showModDateTime f = (show $ mod_date f) ++ " " ++ (show $ mod_time f)
+         modifiedField = case whetherFSEntryNeedsUpdate f t of
+                           True -> "*"
+                           otherwise -> ""
+
+whetherFSEntryNeedsUpdate :: FSEntry -> FSEntry -> Bool
+whetherFSEntryNeedsUpdate f t
+  | ((mod_date f) == (mod_date t)) = 
+      if ((mod_time f) > (mod_time t))
+      then True
+      else False
+  | ((mod_date f) > (mod_date t)) = True
+  | otherwise = False
+
+terminalWidth :: IO Int
+terminalWidth = do tw <- termWidth
+                   return $ fromIntegral (tw - 2)
 
 setMenuEtryId :: MenuEntry -> Int -> MenuEntry
 setMenuEtryId (CopyEntry i f t) id_ = CopyEntry id_ f t
-setMenuEtryId (CopySelected i f t) id_ = CopyEntry id_ f t
+setMenuEtryId (CopySelected i f t) id_ = CopySelected id_ f t
+setMenuEtryId (TarEntrySelected i f t ft) id_ = TarEntrySelected id_ f t ft
 
 enumMenu :: [MenuEntry] -> Int -> [MenuEntry]
 enumMenu [] _     = []
@@ -307,9 +358,25 @@ askFile fse filter_ =
 
 callMenuEntry :: MenuEntry -> IO ()
 callMenuEntry (CopySelected id_ f t) =
-  askFile f (filterFSEtriesByExt (takeExtension (path t)))
+  askFile f (filterFSEntriesByExt (takeExtension (path t)))
   >>= \ff -> copyFile' ff t  
 callMenuEntry (CopyEntry id_ f t) = do copyFile' f t
+callMenuEntry (TarEntrySelected id_ f t ft) =
+  --do ff <- askFile f (filterFSEntriesByExt (takeExtension (path t)))
+  do ff <- askFile f (filterFSEntriesByExt ft)
+     let to = takeDirectory (path t)
+     putStrLn $ to ++ " -> " ++ (path ff)
+     --Tar.unpack to . Tar.read . GZip.decompress =<< BS.readFile (path ff)
+     -- archive contains absolute pathes :-(
+     let rmCmd = "sudo rm -Rf " ++ to ++ "/*"
+     putStrLn $ "Need ROOT passwd for: " ++ rmCmd
+     callCommand rmCmd
+     extractTarGz (path ff) to
+
+extractTarGz :: FilePath -> FilePath -> IO ()
+extractTarGz from to = do
+  setCurrentDirectory to
+  callCommand $ "tar -zxvf " ++ from
 
 copyFile' :: FSEntry -> FSEntry -> IO ()
 copyFile' f@(FSFile _ _ _ _) t@(FSFile _ _ _ _) =
@@ -322,8 +389,8 @@ copyFile' f@(FSFile _ _ _ fp) (FSDir ti tt td tp) =
   where
     tpath = tp ++ "/" ++ (takeFileName fp)
 
-filterFSEtriesByExt :: String -> [FSEntry] -> [FSEntry]
-filterFSEtriesByExt ext entries = filter predicat entries
+filterFSEntriesByExt :: String -> [FSEntry] -> [FSEntry]
+filterFSEntriesByExt ext entries = filter predicat entries
   where
     predicat :: FSEntry -> Bool
     predicat (FSFile _ _ _ p)
@@ -332,7 +399,7 @@ filterFSEtriesByExt ext entries = filter predicat entries
     predicat _ = False
   
 t = do d <- tf
-       askFile d (filterFSEtriesByExt ".epk")
+       askFile d (filterFSEntriesByExt ".epk")
 
 --sord (Ord instance...)
 -- new menuEntry: Dir -> Dir = select from, select to file name
