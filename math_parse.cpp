@@ -8,11 +8,12 @@
 using namespace std;
 
 //#define FIRST "1 AND (AA OR (BB AND 0) AND FF OR (CC XOR DD AND ZZ))"
-#define FIRST " (A OR (B AND C)) "
+//#define FIRST " (A OR (B AND C)) XOR eax "
+#define FIRST " (A OR B) AND (C AND D) OR (F XOR eax) "
 
 #define OPERATORS_NUM 4
 string operators[OPERATORS_NUM] = {"AND", "OR", "XOR", "NOT"};
-string cmds[OPERATORS_NUM] =      {"and", "or", "xor", "not"};
+string cmds[OPERATORS_NUM] =      {"and", "or ", "xor", "not"};
 string registers[4] = {"EAX", "EDX", "ECX", "EBX"};
 
 vector<string> data_section;
@@ -29,6 +30,8 @@ bool clean_braces_once(vector<string>& v);
 void clean_braces(vector<string>& v);
 bool is_variable(string str);
 void fill_code_section(string op, string left, string right, string result);
+bool is_left_brace(string str);
+bool is_right_brace(string str);
 
 string get_cmd(string str) {
   for (size_t i = 0; i < OPERATORS_NUM; i ++) {
@@ -79,6 +82,11 @@ vector<size_t> get_levels(vector<string>& v) {
     }
     levels[i] = lvl;
   }
+  cout << "\nlevels: ";
+  for(size_t i = 0; i < v.size(); i++) {
+    cout << v[i] << "(" << levels[i] << ") ";
+  }
+  cout << "\n";
   return levels;
 }
 
@@ -103,25 +111,21 @@ int main() {
     }
   }
 
-
   vector<string> v = split(str, string(" "));
 
   size_t level = get_max_level(v);
 
-  assembler = ".CODE\n\n";
+  assembler = ".CODE\n";
+  assembler += "; " + string(FIRST) + "\n\n";
 
   while(eval_level_once(v)) {
-    show_vector(v);
     clean_braces(v);
-    show_vector(v);
   }
 
   level = get_max_level(v);
 
   while(eval_level_once(v)) {
-    show_vector(v);
     clean_braces(v);
-    show_vector(v);
   }
 
   string data = ".DATA\n\n";
@@ -162,10 +166,10 @@ bool clean_braces_once(vector<string>& v) {
     cout << "v.size < 2\n";
     return false;
   }
+  vector<size_t> levels = get_levels(v);
   for(auto it = v.begin() + 1; it != v.end() - 1; it++) {
-    if (is_a_brace(*(it-1))) {
-      if (is_a_brace(*(it+1))) {
-        //cout << "erase: " << *(it-1) << " - " << *(it+1) << endl;
+    if (is_left_brace(*(it-1))) {
+      if (is_right_brace(*(it+1))) {
         *(it-1) = *it;
         v.erase(it);
         v.erase(it);
@@ -180,6 +184,20 @@ bool is_a_brace(string str) {
   if (str.compare("{") == 0)
     return true;
   else if (str.compare("}") == 0)
+    return true;
+
+  return false;
+}
+
+bool is_right_brace(string str) {
+  if (str.compare("}") == 0)
+    return true;
+
+  return false;
+}
+
+bool is_left_brace(string str) {
+  if (str.compare("{") == 0)
     return true;
 
   return false;
@@ -208,7 +226,6 @@ bool eval_level_once(vector<string>& v) {
   static size_t tmp = 0;
   bool result = false;
 
-  show_vector(v);
   for(size_t i = 1; i < v.size() - 1; i++) {
     if (levels[i] == level) {
       if (is_operator(v[i])) {
@@ -218,19 +235,16 @@ bool eval_level_once(vector<string>& v) {
 
         v[i-1] = result_location;
 
-        //data_section.push_back(v[i-1] + " DB ?\n");
         data_section.push_back(v[i-1]);
 
         v.erase(v.begin() + i);
         v.erase(v.begin() + i);
 
         tmp ++;
-        show_vector(v);
         return true;
       }
     }
   }
-  show_vector(v);
   return false;
 }
 
@@ -243,23 +257,25 @@ bool is_variable(string str) {
 
 void fill_code_section(string op, string left, string right, string result) {
   string str = "";
-  string cmd = get_cmd(op);;
+  string cmd = get_cmd(op);
 
-  cout << result << " = "
-       << left << " " << op << " " << right << endl;
+  string comment = "; " + result + " = ";
+  comment += left + string(" ") + op + string(" ") + right + string("\n");
+  cout << comment;
 
   if (is_register(left) || is_number(left))
-    str += "mov ax, " + left + "\n";
+    str += "mov eax, " + left + "\n";
   else
-    str += "mov ax, DWORD PTR [" + left + "]\n";
+    str += "mov eax, DWORD PTR [" + left + "]\n";
 
   if(is_register(left) || is_number(left))
-    str += cmd + " ax, " + right + "\n";
+    str += cmd + " eax, " + right + "\n";
   else
-    str += cmd + " ax, DWORD PTR [" + right + "]\n";
+    str += cmd + " eax, DWORD PTR [" + right + "]\n";
 
-  str += "mov DWORD PTR [" + result + "], ax\n\n";
+  str += "mov DWORD PTR [" + result + "], eax\n\n";
 
+  assembler += comment;
   assembler += str;
   code_section.push_back(str);
 }
