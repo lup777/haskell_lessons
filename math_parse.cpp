@@ -7,13 +7,48 @@
 
 using namespace std;
 
-#define FIRST "1 AND (AA OR (BB AND 0) AND FF OR (CC XOR DD AND ZZ))"
+//#define FIRST "1 AND (AA OR (BB AND 0) AND FF OR (CC XOR DD AND ZZ))"
+#define FIRST " (A OR (B AND C)) "
 
-string operators[4] = {"AND", "OR", "XOR", "NOT"};
+#define OPERATORS_NUM 4
+string operators[OPERATORS_NUM] = {"AND", "OR", "XOR", "NOT"};
+string cmds[OPERATORS_NUM] =      {"and", "or", "xor", "not"};
+string registers[4] = {"EAX", "EDX", "ECX", "EBX"};
+
 vector<string> data_section;
 vector<string> code_section;
 vector<string> instructions;
 string assembler;
+
+bool eval_level_once(vector<string>& v);
+size_t get_max_level(vector<string>& v);
+void show_vector(vector<string>& v);
+bool is_operator(string str);
+bool is_a_brace(string str);
+bool clean_braces_once(vector<string>& v);
+void clean_braces(vector<string>& v);
+bool is_variable(string str);
+void fill_code_section(string op, string left, string right, string result);
+
+string get_cmd(string str) {
+  for (size_t i = 0; i < OPERATORS_NUM; i ++) {
+    if (str.compare(operators[i]) == 0)
+      return cmds[i];
+  }
+  return "NOP";
+}
+
+bool is_number(string str) {
+  return regex_match (str, regex("\\d+"));
+}
+
+bool is_register(string str) {
+  for (auto x: registers) {
+    if (str.compare(x) == 0)
+      return true;
+  }
+  return false;
+}
 
 vector<string> split(string str, string delim) {
   vector<string> result;
@@ -26,6 +61,8 @@ vector<string> split(string str, string delim) {
     }
   }
 
+  cout << "split:" << endl;
+  show_vector(result);
   return result;
 }
 
@@ -44,16 +81,6 @@ vector<size_t> get_levels(vector<string>& v) {
   }
   return levels;
 }
-
-bool eval_level_once(vector<string>& v);
-size_t get_max_level(vector<string>& v);
-void show_vector(vector<string>& v);
-bool is_operator(string str);
-bool is_a_brace(string str);
-bool clean_braces_once(vector<string>& v);
-void clean_braces(vector<string>& v);
-bool is_variable(string str);
-void fill_code_section(string op, string left, string right, string result);
 
 int main() {
   string str = string(FIRST);
@@ -168,7 +195,10 @@ bool is_operator(string str) {
 
 size_t get_max_level(vector<string>& v) {
   vector<size_t> levels = get_levels(v);
-  return *(max_element(levels.begin(), levels.end()));
+  if (v.size() == 0)
+    return 0;
+  else
+    return *(max_element(levels.begin(), levels.end()));
 }
 
 bool eval_level_once(vector<string>& v) {
@@ -178,7 +208,8 @@ bool eval_level_once(vector<string>& v) {
   static size_t tmp = 0;
   bool result = false;
 
-  for(size_t i = 0; i < v.size(); i++) {
+  show_vector(v);
+  for(size_t i = 1; i < v.size() - 1; i++) {
     if (levels[i] == level) {
       if (is_operator(v[i])) {
 
@@ -194,10 +225,12 @@ bool eval_level_once(vector<string>& v) {
         v.erase(v.begin() + i);
 
         tmp ++;
+        show_vector(v);
         return true;
       }
     }
   }
+  show_vector(v);
   return false;
 }
 
@@ -210,26 +243,17 @@ bool is_variable(string str) {
 
 void fill_code_section(string op, string left, string right, string result) {
   string str = "";
-  string cmd;
-  if (op.compare("AND") == 0) {
-    cmd = string("and");
-  } else if(op.compare("OR") == 0) {
-    cmd = string("or");
-  } else if(op.compare("XOR") == 0) {
-    cmd = string("xor");
-  } else if(op.compare("NOT") == 0) {
-    cmd = string("not");
-  }
+  string cmd = get_cmd(op);;
+
   cout << result << " = "
        << left << " " << op << " " << right << endl;
 
-  if (is_variable(left))
-    str += "mov ax, DWORD PTR [" + left + "]\n";
-  else
+  if (is_register(left) || is_number(left))
     str += "mov ax, " + left + "\n";
+  else
+    str += "mov ax, DWORD PTR [" + left + "]\n";
 
-  if((right.compare("1") == 0) ||
-     (right.compare("0") == 0))
+  if(is_register(left) || is_number(left))
     str += cmd + " ax, " + right + "\n";
   else
     str += cmd + " ax, DWORD PTR [" + right + "]\n";
