@@ -227,7 +227,13 @@ void fill_code_section(string op, string left, string right, string result) {
     str += "mov ax, DWORD PTR [" + left + "]\n";
   else
     str += "mov ax, " + left + "\n";
-  str += cmd + " ax, " + right + "\n";
+
+  if((right.compare("1") == 0) ||
+     (right.compare("0") == 0))
+    str += cmd + " ax, " + right + "\n";
+  else
+    str += cmd + " ax, DWORD PTR [" + right + "]\n";
+
   str += "mov DWORD PTR [" + result + "], ax\n\n";
 
   assembler += str;
