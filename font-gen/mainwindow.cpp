@@ -101,6 +101,7 @@ void MainWindow::on_lineEdit_textChanged(const QString &arg1)
     this->update();
 }
 
+
 void MainWindow::on_pushButton_clicked()
 {
   if (ui->textEdit->isVisible()) {
@@ -133,7 +134,7 @@ void MainWindow::on_pushButton_clicked()
 
 QVector<unsigned char> MainWindow::imgToBytesArray(QImage img) {
 
-  auto pixel_to_byte = [] (int pixel) {
+  std::function<QPair<int,int>(int pixel)>  pixel_to_byte = [] (int pixel) {
     int byte = pixel / 8;
     int shift = 7 - (pixel - (byte * 8));
     return QPair<int, int>(byte, shift); // byte index and index for left shift
@@ -177,7 +178,24 @@ QVector<unsigned char> MainWindow::imgToBytesArray(QImage img) {
         }
       }
     }
-  return buffer;
+
+  return exchange_cols(buffer, w_bytes);
+}
+
+QVector<unsigned char> MainWindow::exchange_cols (QVector<unsigned char> in, int line_width_bytes) {
+    QVector<unsigned char> res;
+    int lines_num = in.size() / line_width_bytes;
+
+    for (int line = 0; line < lines_num; line++) {
+        for (int col = line_width_bytes - 1; col >= 0; col -- ) {
+
+            int id = (line * line_width_bytes) + col;
+
+            res.push_back( in[id] );
+        }
+
+    }
+    return res;
 }
 
 QString MainWindow::MakeFontBytesString(void) {
