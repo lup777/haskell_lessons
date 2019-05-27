@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
   ui->setupUi(this);
   ui->textEdit->hide();
+  ui->fontComboBox->setCurrentText("Nimbus Mono L");
 }
 
 void MainWindow::wheelEvent(QWheelEvent *event) {
@@ -45,10 +46,11 @@ QImage MainWindow::makeImage(void) {
   QString txt = ui->lineEdit->text();
   QSize size = fm.size(Qt::TextSingleLine, txt);
 
-  QImage img(size, QImage::Format_Mono);
-  //QImage img(QSize(8,13), QImage::Format_Mono);
+  //QImage img(size, QImage::Format_Mono);
+  int new_x = ((size.width() + 7) / 8) * 8;
+  QImage img(QSize(new_x,size.height()), QImage::Format_Mono);
   img.fill(QColor(0, 0, 0, 255));
-  ui->label->setText(QString::number(size.width()) + ":" + QString::number(size.height()));
+
 
   {
     //qDebug() << "draw to imgae";
@@ -56,7 +58,8 @@ QImage MainWindow::makeImage(void) {
     p.setFont(font);
     p.drawText(img.rect(), Qt::AlignCenter, ui->lineEdit->text());
   }
-  return img;
+  ui->label->setText(QString::number(new_x) + ":" + QString::number(img.size().height()));
+  return img.mirrored(true, false);
 }
 
 QImage MainWindow::makeImage(char ch) {
@@ -67,10 +70,11 @@ QImage MainWindow::makeImage(char ch) {
   QString txt = QString(ch);
   QSize size = fm.size(Qt::TextSingleLine, txt);
 
-  QImage img(size, QImage::Format_Mono);
-  //QImage img(QSize(8,13), QImage::Format_Mono);
+  //QImage img(size, QImage::Format_Mono);
+  int new_x = ((size.width() + 7) / 8) * 8;
+  QImage img(QSize(new_x,size.height()), QImage::Format_Mono);
   img.fill(QColor(0, 0, 0, 255));
-  ui->label->setText(QString::number(size.width()) + ":" + QString::number(size.height()));
+  ui->label->setText(QString::number(new_x) + ":" + QString::number(img.size().height()));
 
   {
     //qDebug() << "draw to imgae";
@@ -78,7 +82,7 @@ QImage MainWindow::makeImage(char ch) {
     p.setFont(font);
     p.drawText(img.rect(), Qt::AlignCenter, ui->lineEdit->text());
   }
-  return img;
+  return img.mirrored(true, false);
 }
 
 MainWindow::~MainWindow()
@@ -113,11 +117,15 @@ void MainWindow::on_pushButton_clicked()
   ui->textEdit->resize(this->size().width(), this->size().height() - 100);
 
   //QImage img = makeImage();
-  QImage img = makeImage(160);
+  QImage img = makeImage();
 
   QVector<unsigned char> buffer = imgToBytesArray(img);
 
   QString code;
+
+  int new_x = ((img.size().width() + 7) / 8) * 8;
+  code += QString("0x") + QString::number(new_x, 16) + QString(", ");
+  code += QString("0x") + QString::number(img.size().height(), 16) + QString(", ");
 
   for(int i = 0; i < buffer.size(); i++) {
     if (i != 0)
